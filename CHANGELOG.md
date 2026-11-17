@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5 — 2026-11-17
+
+### Fixed
+- "Tu contexto" said a profile had no documents when its role, CV or experience were pasted text or attached
+  from the bank instead of uploaded files. Pasted text now counts, here and in the file total of the side bar.
+
 ## 1.0.4 — 2026-11-17
 
 ### Fixed

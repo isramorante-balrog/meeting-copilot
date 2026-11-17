@@ -690,10 +690,18 @@ function renderStatus() {
   $('#s-memory').value = cfg.use_learned_memory === false ? '0' : '1';
   $('#s-memory-status').textContent = t('memory.words', ctx.learned_memory_words || 0);
   $('#s-project-status').textContent = cfg.claude_project ? `${cfg.claude_project}${ctx.project_instructions_words ? ' · CLAUDE.md loaded' : ' · no CLAUDE.md found'}` : '';
-  const n = (ev.context_files || []).length;
+  const n = contextSources(ev);
   $('#ctx-total').textContent = n ? t('ctx.total', ctx.total_words || 0, n) + (ctx.truncated ? t('ctx.truncated') : '') : '';
   renderProfileSelect();
   renderAudioState();
+}
+/** How many sources feed the answers: uploaded files plus pasted text (a pasted role / CV replaces its file). */
+function contextSources(ev) {
+  const files = ev.context_files || [], manual = (ev.context || {}).manual || {};
+  let n = files.length;
+  for (const slot of ['role', 'profile']) if (manual[slot] > 0 && !files.some((f) => String(f).startsWith(slot + ':'))) n += 1;
+  if (manual.experience > 0 && !files.some((f) => /pasted notes/.test(String(f)))) n += 1;
+  return n;
 }
 function setCheck(id, state, text) {
   const el = $('#' + id); if (!el) return;
@@ -718,7 +726,7 @@ function renderPreflight(ev) {
   else if (pi.available) setCheck('chk-llm', 'ok', t('chk.llm_ok', provLabel(primary), pi.model || '', healthy.filter((n) => n !== primary).length));
   else if (healthy.length) setCheck('chk-llm', 'warn', t('chk.llm_fallback', provLabel(primary), provLabel(healthy[0])));
   else setCheck('chk-llm', 'bad', t('chk.llm_none'));
-  const ctx = ev.context || {}, n = (ev.context_files || []).length, name = (ev.profile || {}).name || 'default';
+  const ctx = ev.context || {}, n = contextSources(ev), name = (ev.profile || {}).name || 'default';
   setCheck('chk-ctx', n ? 'ok' : 'warn', n ? t('chk.ctx_ok', name, n, ctx.total_words || 0) : t('chk.ctx_none', name));
 }
 function sttLabel(ev) {
