@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.4 — 2026-11-17
+
+### Fixed
+- The document bank created a new entry every time the same document was used in another profile (for example
+  one CV listed once per profile as `<perfil>_profile`). A document is now identified by its text: saving text
+  that is already in the bank reuses the existing entry, whatever name it arrives under.
+- Existing duplicates are merged at start-up. The copy kept is the uploaded file when there is one. Nothing is
+  deleted: the extra copies are moved to `data/bank/_duplicates/`. Playbooks are not touched.
+
 ## 1.0.3 — 2026-11-17
 
 ### Fixed

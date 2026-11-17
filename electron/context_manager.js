@@ -19,6 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Worker } = require('worker_threads');
+const crypto = require('crypto');
 
 const SLOT_DIRS = { role: 'position_description', profile: 'professional_profile', experience: 'extra_experience', playbook: 'playbook_files' };
 const LEGACY_SLOT_DIRS = { role: '01_role', profile: '02_profile', experience: '03_experience', playbook: '04_playbook' };
@@ -59,11 +60,40 @@ class BankStore {
     return stem.replace(/[^\w.\- ]+/g, '').trim().replace(/\s+/g, '_').slice(0, 80) || 'entry';
   }
 
-  /** Save parsed text (+ optional original file) into data/bank/<category>/. Same filename => update in place. */
+  /** Identity of a document = its words. Case, punctuation, spacing and a leading "## title" line do not count. */
+  static fingerprint(text) {
+    const t = String(text || '').replace(/^\s*#{1,6}[^\n]*\n/, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    return crypto.createHash('sha1').update(t).digest('hex');
+  }
+
+  /** The entry of `category` that already holds this exact text under another name, or null. */
+  findSame(category, text, exceptFile = '') {
+    const want = BankStore.fingerprint(text);
+    const dir = path.join(this.dir, category);
+    let names = [];
+    try { names = fs.readdirSync(dir); } catch { return null; }
+    for (const f of names) {
+      if (!/\.(md|txt)$/i.test(f) || f.toLowerCase() === 'readme.md' || f.toLowerCase() === exceptFile.toLowerCase()) continue;
+      try {
+        if (BankStore.fingerprint(fs.readFileSync(path.join(dir, f), 'utf8')) === want) return f;
+      } catch {}
+    }
+    return null;
+  }
+
+  /** Save parsed text (+ optional original file) into data/bank/<category>/. Same filename => update in place.
+   *  Same TEXT under another name => nothing new is created; the existing entry is returned (duplicate: true). */
   save(category, originalName, text, { originalPath = null, source = 'upload', profile = null, pages = null } = {}) {
     if (!BANK_CATEGORIES.includes(category)) throw new ContextError(`Unknown bank category ${category}`, 'bad_category');
     this.ensureDirs();
     const stem = BankStore.safeStem(originalName);
+    if (countWords(String(text || '')) >= 2 && !fs.existsSync(path.join(this.dir, category, `${stem}.md`))) {
+      const same = this.findSame(category, text, `${stem}.md`);
+      if (same) {
+        const meta = readJson(path.join(this.dir, category, same.replace(/\.(md|txt)$/i, '.json')), null) || {};
+        return { ...meta, id: same, filename: same, category, duplicate: true };
+      }
+    }
     const mdPath = path.join(this.dir, category, `${stem}.md`);
     const metaPath = path.join(this.dir, category, `${stem}.json`);
     const existing = readJson(metaPath, null);
@@ -167,6 +197,43 @@ class BankStore {
     return this.list();
   }
 
+  /** Collapse entries of one category that hold the same text into one. The copy that is kept is, in order: one
+   *  with its original file, an uploaded one, one not named after a profile (<perfil>_profile …), the oldest.
+   *  Nothing is deleted: the extra copies are moved to data/bank/_duplicates/<category>/. Playbooks are left
+   *  alone because profiles refer to them by file name. Returns how many copies were moved. */
+  dedupe() {
+    let moved = 0;
+    const all = this.list();
+    for (const category of ['roles', 'cvs', 'experience']) {
+      const groups = new Map();
+      for (const it of all[category] || []) {
+        let fp;
+        try { fp = BankStore.fingerprint(fs.readFileSync(it.path, 'utf8')); } catch { continue; }
+        if (!groups.has(fp)) groups.set(fp, []);
+        groups.get(fp).push(it);
+      }
+      for (const items of groups.values()) {
+        if (items.length < 2) continue;
+        const rank = (it) => [it.hasOriginal ? 0 : 1, it.source === 'upload' || it.source === 'file' ? 0 : 1,
+          /_(role|profile|experience)\.(md|txt)$/i.test(it.filename) ? 1 : 0, it.updatedAt || ''];
+        items.sort((a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < x.length; i++) { if (x[i] < y[i]) return -1; if (x[i] > y[i]) return 1; } return 0; });
+        const attic = path.join(this.dir, '_duplicates', category);
+        fs.mkdirSync(attic, { recursive: true });
+        for (const it of items.slice(1)) {
+          const meta = readJson(it.path.replace(/\.(md|txt)$/i, '.json'), null);
+          const files = [it.path, it.path.replace(/\.(md|txt)$/i, '.json')];
+          if (meta && meta.original) files.push(path.join(this.dir, meta.original));
+          for (const f of files) {
+            try { if (fs.existsSync(f)) fs.renameSync(f, path.join(attic, path.basename(f))); } catch (e) { console.error('[bank] could not move duplicate', f, e.message); }
+          }
+          moved++;
+        }
+      }
+    }
+    if (moved) console.log(`[bank] ${moved} duplicate entr${moved === 1 ? 'y' : 'ies'} moved to data/bank/_duplicates`);
+    return moved;
+  }
+
   /** One-time import of everything already uploaded into profiles (active + archived) and the legacy context/. */
   migrateFrom(profilesDir, archivedDir, legacyContextDir) {
     let added = 0;
@@ -185,9 +252,9 @@ class BankStore {
         try {
           const text = fs.readFileSync(src, 'utf8').replace(/^<!--[\s\S]*?-->\s*/, '');
           if (countWords(text) < 2) continue;
-          this.save(SLOT_TO_CATEGORY[slot], e.source || path.basename(e.file), text, { source: 'migrated', profile, pages: e.pages || null });
+          const r = this.save(SLOT_TO_CATEGORY[slot], e.source || path.basename(e.file), text, { source: 'migrated', profile, pages: e.pages || null });
           seen.add(`${stem}.md`.toLowerCase());
-          added++;
+          if (!r.duplicate) added++;
         } catch (err) {
           console.error('[bank] migrate failed for', src, err.message);
         }
@@ -203,9 +270,9 @@ class BankStore {
           try {
             const text = fs.readFileSync(f, 'utf8');
             if (countWords(text) < 2) continue;
-            this.save(SLOT_TO_CATEGORY[slot], name, text, { source: 'pasted', profile });
+            const r = this.save(SLOT_TO_CATEGORY[slot], name, text, { source: 'pasted', profile });
             seen.add(`${BankStore.safeStem(name)}.md`.toLowerCase());
-            added++;
+            if (!r.duplicate) added++;
           } catch {}
         }
       }

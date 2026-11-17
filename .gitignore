@@ -19,6 +19,7 @@ data/bank/roles/*
 data/bank/cvs/*
 data/bank/experience/*
 data/bank/playbooks/*
+data/bank/_duplicates/
 !data/bank/playbooks/default_playbook.md
 !data/bank/**/.gitkeep
 context/*

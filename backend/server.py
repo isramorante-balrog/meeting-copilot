@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import itertools
+import hashlib
 import json
 import logging
 import os
@@ -1568,8 +1569,24 @@ class Copilot:
         if not safe.lower().endswith((".md", ".txt")):
             safe += ".md"
         path = self.bank_dir / sub / safe
+        if not path.exists() and len((text or "").split()) >= 2:
+            # the same text already in the bank under another name (a CV attached to a second profile): reuse it
+            want = self._bank_fingerprint(text)
+            for other in (self.bank_dir / sub).glob("*"):
+                if other.is_file() and other.suffix.lower() in (".md", ".txt") and other.name.lower() != "readme.md":
+                    try:
+                        if self._bank_fingerprint(other.read_text(encoding="utf-8", errors="replace")) == want:
+                            return other
+                    except OSError:
+                        continue
         path.write_text((text or "").strip() + "\n", encoding="utf-8")
         return path
+
+    @staticmethod
+    def _bank_fingerprint(text: str) -> str:
+        """Same rule as BankStore.fingerprint in electron/context_manager.js: only the words count."""
+        body = re.sub(r"^\s*#{1,6}[^\n]*\n", "", text or "")
+        return hashlib.sha1(" ".join(re.findall(r"[^\W_]+", body.lower())).encode("utf-8")).hexdigest()
 
     def bank_read(self, sub: str, name: str) -> str:
         path = (self.bank_dir / sub / Path(name).name)

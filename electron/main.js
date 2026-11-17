@@ -818,6 +818,7 @@ ipcMain.handle('bank:delete', (_e, category, id) => {
 });
 ipcMain.handle('bank:migrate', () => {
   const added = getBank().migrateFrom(PROFILES_DIR, ARCHIVED_DIR, CONTEXT_DIR);
+  getBank().dedupe();
   bankChanged();
   return { added, bank: getBank().list() };
 });
@@ -899,6 +900,7 @@ if (!gotLock) {
       getProfiles();
       const added = getBank().migrateFrom(PROFILES_DIR, ARCHIVED_DIR, CONTEXT_DIR);
       if (added) console.log(`[bank] ${added} existing file(s) imported into data/bank`);
+      getBank().dedupe();   // the same CV saved once per profile becomes one entry
     } catch (e) {
       console.error('[main] profile/bank initialisation failed:', e.message);
     }
