@@ -615,7 +615,8 @@ class DeepgramStreamingEngine:
             for lg in ("es", "en"):
                 self._queues[(ch, lg)] = asyncio.Queue()
         try:
-            self._loop.run_until_complete(asyncio.gather(*(self._socket_task(ch, lg) for ch in self.channels for lg in ("es", "en"))))
+            self._loop.run_until_complete(asyncio.gather(*(self._socket_task(ch, lg) for ch in self.channels for lg in ("es", "en")),
+                                                         return_exceptions=True))   # one socket failing never stops the others
         finally:
             self._loop.close()
 
@@ -665,7 +666,7 @@ class DeepgramStreamingEngine:
                 backoff = 1.0
                 await self._pump(channel, lang, ws)
             except Exception as exc:  # noqa: BLE001
-                msg = str(exc).splitlines()[0][:200]
+                msg = ((str(exc) or type(exc).__name__).splitlines() or [type(exc).__name__])[0][:200]   # TimeoutError() has no text
                 if "401" in msg or "403" in msg:
                     msg = "Deepgram rejected the API key (401/403) — check stt.deepgram_api_key"
                 self._conn[key].update(connected=False, error=msg)

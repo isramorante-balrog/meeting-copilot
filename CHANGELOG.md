@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.3 — 2026-11-17
+
+### Fixed
+- Setup could keep showing "Deepgram está arrancando…" although the engine was connected: the label came from
+  a status sent while the engine was still starting. The backend now always sends a fresh status when start-up
+  ends, and the app asks for one whenever the live audio diagnostics disagree with what it shows.
+- The transcription check now tells "connecting" apart from a rejected key or a network error and shows the reason.
+- A Deepgram connection that timed out without an error text could stop all four sockets for good.
+
 ## 1.0.2 — 2026-11-17
 
 ### Fixed

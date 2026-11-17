@@ -251,7 +251,7 @@ Object.assign(I18N.en, {
   'report.note_ph': 'What were you doing when it failed? (optional)', 'report.send': 'Create report', 'report.cancel': 'Cancel', 'report.no_errors': 'No errors recorded in this session.',
   'report.sent': (u) => `Report filed: ${u}`, 'report.opened': 'GitHub opened with the report filled in — review it and press "Submit new issue". A full copy is on your clipboard.',
   'report.saved': (f) => `Report saved to ${f}`, 'report.api_failed': (e) => `Could not file it automatically (${e}); opening GitHub instead.`,
-  'prov.failed': 'failing', 'upd.none': (v) => `You already have the latest version (v${v}).`, 'upd.checking_long': 'Checking GitHub for a newer version…', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
+  'prov.failed': 'failing', 'chk.stt_connecting': (e) => `${e} is connecting…`, 'upd.none': (v) => `You already have the latest version (v${v}).`, 'upd.checking_long': 'Checking GitHub for a newer version…', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
 });
 Object.assign(I18N.es, {
   'btn.screen': 'Pantalla', 'btn.setup': 'Ajustes', 'btn.end': 'Terminar', 'setup.start': 'Empezar a escuchar', 'setup.resume': 'Volver al HUD',
@@ -273,7 +273,7 @@ Object.assign(I18N.es, {
   'report.note_ph': '¿Qué estabas haciendo cuando falló? (opcional)', 'report.send': 'Crear informe', 'report.cancel': 'Cancelar', 'report.no_errors': 'No hay errores registrados en esta sesión.',
   'report.sent': (u) => `Informe registrado: ${u}`, 'report.opened': 'Se abrió GitHub con el informe ya escrito: revísalo y pulsa «Submit new issue». Tienes una copia completa en el portapapeles.',
   'report.saved': (f) => `Informe guardado en ${f}`, 'report.api_failed': (e) => `No se pudo registrar automáticamente (${e}); se abre GitHub.`,
-  'prov.failed': 'con error', 'upd.none': (v) => `Ya tienes la última versión (v${v}).`, 'upd.checking_long': 'Buscando una versión más nueva en GitHub…', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
+  'prov.failed': 'con error', 'chk.stt_connecting': (e) => `${e} se está conectando…`, 'upd.none': (v) => `Ya tienes la última versión (v${v}).`, 'upd.checking_long': 'Buscando una versión más nueva en GitHub…', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
 });
 let uiLang = 'en';
 const t = (key, ...args) => {
@@ -700,6 +700,7 @@ function setCheck(id, state, text) {
   el.classList.remove('ok', 'warn', 'bad', 'busy'); el.classList.add(state);
   $('#' + id + '-text').textContent = text;
 }
+let lastStatusAsk = 0;
 const STT_NAMES = { deepgram: 'Deepgram', whisper_local: 'Whisper local', groq_whisper: 'Groq Whisper' };
 /** Setup header: the three things that must be ready before a call, each saying what is wrong in plain words. */
 function renderPreflight(ev) {
@@ -707,6 +708,8 @@ function renderPreflight(ev) {
   const eng = STT_NAMES[ev.stt_engine || s.stt_engine] || 'STT';
   if (ev.backend_link === false) setCheck('chk-stt', 'busy', t('chk.offline'));
   else if (ev.stt_error) setCheck('chk-stt', 'bad', String(ev.stt_error).slice(0, 140));
+  else if (ev.stt_ready && (ev.stt || {}).ready === false && (ev.stt || {}).error) setCheck('chk-stt', 'bad', `${eng}: ${String(ev.stt.error).slice(0, 120)}`);
+  else if (ev.stt_ready && (ev.stt || {}).ready === false) setCheck('chk-stt', 'busy', t('chk.stt_connecting', eng));
   else setCheck('chk-stt', ev.stt_ready ? 'ok' : 'busy', ev.stt_ready ? t('chk.stt_ok', eng) : t('chk.stt_loading', eng));
   const primary = s.primary || 'claude', pi = info[primary] || {};
   const healthy = PROVIDER_ORDER.filter((n) => (info[n] || {}).available && !(info[n] || {}).error);
@@ -1862,7 +1865,18 @@ window.copilot.onEvent((ev) => {
       if (ev.onboarded === false && !onboardingShown && mode === 'setup') { onboardingShown = true; openProviders(true); }
       break;
     }
-    case 'levels': renderMeters(ev); if (ev.diag) { lastDiag = ev.diag; renderDiag(); } break;
+    case 'levels':
+      renderMeters(ev);
+      if (ev.diag) {
+        lastDiag = ev.diag; renderDiag();
+        // levels arrive ten times a second and carry the engine's real state: if the last full status disagrees
+        // (it was sent while the engine was still starting), ask for a fresh one instead of showing a stale label
+        const live = Boolean(ev.diag.stt_device), c = ev.diag.stt_connections;
+        const conn = c ? Boolean((c.them && c.them.connected) || (c.me && c.me.connected)) : live;
+        const shown = Boolean(lastStatus.stt_ready) && ((lastStatus.stt || {}).ready !== false);
+        if ((live && conn) !== shown && Date.now() - lastStatusAsk > 2000) { lastStatusAsk = Date.now(); window.copilot.send({ type: 'status' }); }
+      }
+      break;
     case 'audio_devices': lastDevices = ev; fillDeviceSelects(); if ((ev.errors || []).length) toast(ev.errors.join(' | '), true); break;
     case 'gemini_models':
       if (ev.models && ev.models.length) { lastStatus.settings = { ...(lastStatus.settings || {}), gemini_models: ev.models }; fillSelect($('#s-gemini-model'), ev.models, $('#s-gemini-model').value); toast(t('gemini.listed', ev.models.length)); }

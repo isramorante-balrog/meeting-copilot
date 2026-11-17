@@ -244,11 +244,14 @@ class Copilot:
                 threading.Thread(target=watchdog, daemon=True).start()
                 eng = build_engine({**stt, "engine": "whisper_local"}, self.cfg["general"].get("language", "auto"), vocab,
                                    default_language=self.stt_default_language(), **cbs)
-            if gen != self._stt_gen:  # superseded while loading
+            with self._stt_lock:           # check + assign atomically: a restart cannot slip in between
+                current = gen == self._stt_gen
+                if current:
+                    self.transcriber = eng
+            if not current:  # superseded while loading
                 if hasattr(eng, "close"):
                     eng.close()
                 return
-            self.transcriber = eng
             self.diag["stt_state"] = "ready"
             self.diag["stt_engine"] = eng.name
             self.diag["keyterms"] = len(vocab)
@@ -265,7 +268,10 @@ class Copilot:
             self.diag["last_error"] = self.stt_error
             log.exception("Failed to start STT engine %s", engine)
             self.broadcast({"type": "error", "message": f"STT engine '{engine}' failed to start: {exc}"})
-        self.broadcast_status()
+        finally:
+            # the UI must never be left on the "starting" status that was sent while the engine was being built
+            self.broadcast_status()
+            threading.Timer(2.0, self.broadcast_status).start()
 
     def stt_default_language(self) -> str:
         """Which native decoder AUTO routes to before any question is heard: the profile's default language,
