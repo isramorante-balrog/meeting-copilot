@@ -1,0 +1,166 @@
+{
+  "backend": {
+    "host": "127.0.0.1",
+    "port": 8765,
+    "python": ""
+  },
+  "hud": {
+    "width": 520,
+    "height": 380,
+    "max_width": 520,
+    "top": 6,
+    "opacity": 0.75,
+    "font_size": 17,
+    "setup_width": 1040,
+    "setup_height": 720,
+    "nudge_px": 40,
+    "auto_vision": false,
+    "auto_vision_interval_s": 5
+  },
+  "general": {
+    "language": "auto",
+    "primary": "claude",
+    "ui_language": "es",
+    "active_profile": "default",
+    "onboarded": false
+  },
+  "updates": {
+    "enabled": true,
+    "auto_install": true,
+    "repo": "isramorante-balrog/meeting-copilot",
+    "check_hours": 6
+  },
+  "hotkeys": {
+    "screenshot": "Alt+S",
+    "force_answer": "Alt+A",
+    "toggle_visibility": "Alt+H",
+    "toggle_listening": "Alt+M",
+    "followup_example": "Alt+1",
+    "followup_deepen": "Alt+2",
+    "followup_tldr": "Alt+3",
+    "followup_pivot": "Alt+4",
+    "ghost": "Alt+G",
+    "auto_vision": "Alt+V",
+    "new_turn": "Alt+N",
+    "input_mode": "Alt+P",
+    "nudge_up": "Alt+Shift+Up",
+    "nudge_down": "Alt+Shift+Down",
+    "nudge_left": "Alt+Shift+Left",
+    "nudge_right": "Alt+Shift+Right",
+    "scroll_up": "Alt+Up",
+    "scroll_down": "Alt+Down",
+    "opacity_down": "Alt+[",
+    "opacity_up": "Alt+]",
+    "end_session": "Alt+E",
+    "summarize": "Alt+U",
+    "clear": "Alt+X",
+    "toggle_language": "Alt+L",
+    "settings": "Alt+T",
+    "quit": "Alt+Q"
+  },
+  "audio": {
+    "enabled": true,
+    "mic_device": "default",
+    "loopback_device": "default",
+    "input_mode": "pc",
+    "vad_aggressiveness": 2,
+    "end_silence_ms": 600,
+    "end_silence_incomplete_ms": 900,
+    "min_speech_ms": 350,
+    "max_utterance_s": 30,
+    "energy_threshold": 0.015,
+    "levels_hz": 10
+  },
+  "stt": {
+    "engine": "deepgram",
+    "deepgram_api_key": "",
+    "deepgram_model": "nova-3",
+    "deepgram_endpointing_ms": 750,
+    "deepgram_utterance_end_ms": 1100,
+    "force_language": null,
+    "groq_api_key": "",
+    "groq_model": "whisper-large-v3-turbo",
+    "model_size": "small",
+    "device": "auto",
+    "compute_type": "default",
+    "language": null,
+    "beam_size": 1,
+    "whisper_prompt": "",
+    "vocabulary": [],
+    "max_keyterms": 60
+  },
+  "llm": {
+    "claude_cli": "claude",
+    "claude_model": "claude-sonnet-5-5",
+    "claude_models": [
+      "claude-fable-5-1",
+      "claude-opus-5-5",
+      "claude-sonnet-5-5",
+      "claude-haiku-5-5",
+      "opus",
+      "sonnet",
+      "haiku"
+    ],
+    "claude_timeout_s": 60,
+    "gemini_api_key_env": "GEMINI_API_KEY",
+    "gemini_api_key": "",
+    "providers": {
+      "openai": {
+        "api_key": "",
+        "model": "gpt-4o-mini",
+        "base_url": ""
+      },
+      "xai": {
+        "api_key": "",
+        "model": "grok-3-mini",
+        "base_url": ""
+      },
+      "deepseek": {
+        "api_key": "",
+        "model": "deepseek-chat",
+        "base_url": ""
+      }
+    },
+    "gemini_model": "gemini-2.5-flash",
+    "gemini_models": [
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash"
+    ],
+    "gemini_classifier": false,
+    "auto_answer": true,
+    "transcript_window": 10,
+    "max_answer_words": 110,
+    "auto_vision": false,
+    "auto_vision_always": false,
+    "auto_vision_max_age_s": 20,
+    "language_flip_rescue_s": 15,
+    "turn_fast_hold_ms": 0,
+    "turn_setup_hold_ms": 100,
+    "turn_continue_hold_ms": 2500,
+    "turn_answered_stale_s": 12,
+    "turn_watchdog_s": 2.5,
+    "turn_me_words_reset": 4,
+    "turn_max_gap_s": 25,
+    "turn_max_gap_no_mic_s": 8,
+    "turn_max_words": 400,
+    "fast_opener": true,
+    "fast_provider": "auto",
+    "fast_claude_model": "claude-haiku-5-5",
+    "fast_gemini_model": "gemini-2.5-flash",
+    "speculate": false,
+    "speculate_min_words": 8,
+    "speculate_min_overlap": 0.7
+  },
+  "style": {
+    "tone": "natural",
+    "length": "medium"
+  },
+  "context": {
+    "max_chars": 180000,
+    "profiles_dir": "profiles",
+    "chunk_words": 300,
+    "top_chunks": 3
+  }
+}

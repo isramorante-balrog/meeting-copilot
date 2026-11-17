@@ -1,0 +1,8 @@
+numpy>=1.26
+sounddevice>=0.4.6
+webrtcvad-wheels>=2.0.14
+faster-whisper>=1.1.0
+websockets>=13.0
+requests>=2.31
+google-genai>=1.0.0
+pyaudiowpatch>=0.2.12; sys_platform == "win32"

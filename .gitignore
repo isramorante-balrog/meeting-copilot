@@ -1,0 +1,33 @@
+# dependencies / build
+node_modules/
+backend/.venv/
+__pycache__/
+*.pyc
+.state/
+.copilot/
+
+# local settings and secrets (API keys live here) - never commit
+config.json
+.env
+
+# user data: profiles, CVs, playbooks you add, session logs, learned memory
+profiles/
+profiles_archived/
+logs/
+*.log
+data/bank/roles/*
+data/bank/cvs/*
+data/bank/experience/*
+data/bank/playbooks/*
+!data/bank/playbooks/default_playbook.md
+!data/bank/**/.gitkeep
+context/*
+!context/README.md
+!context/example_profile.md
+!context/example_scenarios.md
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

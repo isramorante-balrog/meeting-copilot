@@ -1,0 +1,31 @@
+{
+  "name": "meeting-copilot",
+  "version": "1.0.0",
+  "description": "Real-time meeting copilot: live transcription (Deepgram / Whisper) and streaming AI answers (Claude, ChatGPT, Gemini, Grok, DeepSeek) in an always-on-top HUD. Electron + Python.",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:debug": "electron . --debug",
+    "backend": "python backend/server.py",
+    "backend:devices": "python backend/server.py --list-devices",
+    "probe": "python backend/tools/ws_probe.py"
+  },
+  "dependencies": {
+    "mammoth": "^1.13.0",
+    "pdf-parse": "^2.4.5",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "license": "MIT",
+  "author": "Meeting Copilot contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/isramorante-balrog/meeting-copilot.git"
+  },
+  "homepage": "https://github.com/isramorante-balrog/meeting-copilot#readme",
+  "bugs": {
+    "url": "https://github.com/isramorante-balrog/meeting-copilot/issues"
+  }
+}
