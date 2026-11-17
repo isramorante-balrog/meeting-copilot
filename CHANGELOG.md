@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2 — 2026-11-17
+
+### Fixed
+- The updater only looked at published releases and tags, so with none published it reported "up to date" and
+  clicking the version did nothing visible. It now also reads the version on the default branch and takes the
+  highest of the three, so a pushed version bump reaches installed copies without publishing anything.
+- A manual check now says what it is doing and what it found.
+
 ## 1.0.1 — 2026-11-17
 
 ### Added

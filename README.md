@@ -71,8 +71,8 @@ All hotkeys can be changed in `config.json` (`hotkeys`). `config.example.json` l
 The version is shown in the Setup header; click it to check now. With **Actualizar la app automáticamente** on
 (default), a newer release is downloaded and installed when no live session is running, then the app restarts.
 Your `config.json`, profiles, document bank and logs are never touched by an update. To turn it off set
-`"updates": {"enabled": false}` in `config.json`. Maintainers: bump `version` in `package.json` and push a tag
-`vX.Y.Z`; the release workflow publishes it.
+`"updates": {"enabled": false}` in `config.json`. Maintainers: bump `version` in `package.json` and push to the
+default branch; installed copies pick it up. Publishing a release or a `vX.Y.Z` tag is optional.
 
 ## When something fails
 

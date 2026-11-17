@@ -251,7 +251,7 @@ Object.assign(I18N.en, {
   'report.note_ph': 'What were you doing when it failed? (optional)', 'report.send': 'Create report', 'report.cancel': 'Cancel', 'report.no_errors': 'No errors recorded in this session.',
   'report.sent': (u) => `Report filed: ${u}`, 'report.opened': 'GitHub opened with the report filled in — review it and press "Submit new issue". A full copy is on your clipboard.',
   'report.saved': (f) => `Report saved to ${f}`, 'report.api_failed': (e) => `Could not file it automatically (${e}); opening GitHub instead.`,
-  'prov.failed': 'failing', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
+  'prov.failed': 'failing', 'upd.none': (v) => `You already have the latest version (v${v}).`, 'upd.checking_long': 'Checking GitHub for a newer version…', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
 });
 Object.assign(I18N.es, {
   'btn.screen': 'Pantalla', 'btn.setup': 'Ajustes', 'btn.end': 'Terminar', 'setup.start': 'Empezar a escuchar', 'setup.resume': 'Volver al HUD',
@@ -273,7 +273,7 @@ Object.assign(I18N.es, {
   'report.note_ph': '¿Qué estabas haciendo cuando falló? (opcional)', 'report.send': 'Crear informe', 'report.cancel': 'Cancelar', 'report.no_errors': 'No hay errores registrados en esta sesión.',
   'report.sent': (u) => `Informe registrado: ${u}`, 'report.opened': 'Se abrió GitHub con el informe ya escrito: revísalo y pulsa «Submit new issue». Tienes una copia completa en el portapapeles.',
   'report.saved': (f) => `Informe guardado en ${f}`, 'report.api_failed': (e) => `No se pudo registrar automáticamente (${e}); se abre GitHub.`,
-  'prov.failed': 'con error', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
+  'prov.failed': 'con error', 'upd.none': (v) => `Ya tienes la última versión (v${v}).`, 'upd.checking_long': 'Buscando una versión más nueva en GitHub…', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
 });
 let uiLang = 'en';
 const t = (key, ...args) => {
@@ -1445,6 +1445,8 @@ function renderUpdate(ev) {
   btn.className = `linkbtn nodrag update-pill ${ev.state || ''}`;
   btn.title = ev.state === 'error' ? ev.error : `${ev.repo || ''} · v${cur}${ev.notes ? '\n\n' + ev.notes : ''}`;
   if (['available', 'staged', 'restarting', 'error'].includes(ev.state)) toast(label, ev.state === 'error');
+  if (ev.state === 'up_to_date' && ev.manual) toast(t('upd.none', cur));
+  if (ev.state === 'checking' && ev.manual) toast(t('upd.checking_long'));
 }
 $('#btn-update').addEventListener('click', () => window.copilot.send({ type: lastUpdate && ['available', 'staged'].includes(lastUpdate.state) ? 'install_update' : 'check_updates' }));
 

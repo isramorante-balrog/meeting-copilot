@@ -3,8 +3,10 @@
  * Auto-updater for the source distribution (the app runs from its own folder via the launcher, it is not
  * a packaged installer, so electron-updater does not apply).
  *
- *   check    GET https://api.github.com/repos/<repo>/releases/latest  (falls back to /tags when the repo
- *            has tags but no published release) and compare with package.json "version" (semver).
+ *   check    Three places are asked and the highest version wins, compared with the local package.json:
+ *            the latest published release, the highest semver tag, and package.json on the default branch.
+ *            The branch counts because a version bump pushed to it IS the release for this project: nothing
+ *            has to be published by hand for installed copies to update.
  *   download the release source tarball to a temp folder and unpack it with the system `tar`
  *            (present on Windows 10 1803+, macOS and Linux).
  *   install  copy the new files over the app folder. User data is never touched:
@@ -118,10 +120,7 @@ class Updater {
     if (this.timer.unref) this.timer.unref();
   }
 
-  /** Latest version on GitHub: published release first, highest semver tag otherwise. */
-  async latest() {
-    const { repo } = this.cfg();
-    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('updates.repo must look like "owner/name"');
+  async fromRelease(repo) {
     const api = `https://api.github.com/repos/${repo}`;
     try {
       const rel = await request(`${api}/releases/latest`, { json: true });
@@ -130,12 +129,38 @@ class Updater {
                  tarball: rel.tarball_url || `${api}/tarball/${rel.tag_name}`, url: rel.html_url };
       }
     } catch (e) { if (e.status !== 404) throw e; }
+    return null;
+  }
+
+  async fromTags(repo) {
+    const api = `https://api.github.com/repos/${repo}`;
     const tags = await request(`${api}/tags?per_page=50`, { json: true });
     const best = (Array.isArray(tags) ? tags : []).filter((t) => parseVersion(t.name))
       .sort((a, b) => (isNewer(a.name, b.name) ? -1 : isNewer(b.name, a.name) ? 1 : 0))[0];
     if (!best) return null;
     return { version: best.name.replace(/^v/i, ''), tag: best.name, notes: '', tarball: `${api}/tarball/${best.name}`,
              url: `https://github.com/${repo}/releases/tag/${best.name}` };
+  }
+
+  /** package.json on the default branch: a pushed version bump is an update even when no release was published. */
+  async fromBranch(repo) {
+    const text = await request(`https://raw.githubusercontent.com/${repo}/HEAD/package.json?t=${Date.now()}`);
+    const v = JSON.parse(text).version;
+    if (!parseVersion(v)) return null;
+    return { version: String(v).replace(/^v/i, ''), tag: 'HEAD', notes: '', tarball: `https://api.github.com/repos/${repo}/tarball`,
+             url: `https://github.com/${repo}/blob/HEAD/CHANGELOG.md` };
+  }
+
+  /** Highest version among the published release, the tags and the default branch. */
+  async latest() {
+    const { repo } = this.cfg();
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('updates.repo must look like "owner/name"');
+    const found = [], errors = [];
+    for (const src of [() => this.fromRelease(repo), () => this.fromTags(repo), () => this.fromBranch(repo)]) {
+      try { const r = await src(); if (r) found.push(r); } catch (e) { errors.push(e); }
+    }
+    if (!found.length) { if (errors.length) throw errors[0]; return null; }
+    return found.sort((a, b) => (isNewer(a.version, b.version) ? -1 : isNewer(b.version, a.version) ? 1 : 0))[0];
   }
 
   /** Check; when a newer version exists and auto_install is on, download + stage (+ install when idle). */
@@ -146,7 +171,7 @@ class Updater {
     if (!c.enabled && !manual) return this.set({ state: 'disabled' });
     this.working = true;
     try {
-      this.set({ state: 'checking', error: null });
+      this.set({ state: 'checking', error: null, manual });
       const latest = await this.latest();
       const now = new Date().toISOString();
       if (!latest || !isNewer(latest.version, this.currentVersion())) {
