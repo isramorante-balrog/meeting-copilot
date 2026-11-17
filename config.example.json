@@ -30,6 +30,11 @@
     "repo": "isramorante-balrog/meeting-copilot",
     "check_hours": 6
   },
+  "reports": {
+    "repo": "isramorante-balrog/meeting-copilot",
+    "github_token": "",
+    "include_log": true
+  },
   "hotkeys": {
     "screenshot": "Alt+S",
     "force_answer": "Alt+A",

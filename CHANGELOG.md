@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.1 — 2026-11-17
+
+### Added
+- Problem reports. "Reportar problema" (Setup title bar, and on any failed answer) builds a diagnostic report
+  and files it as an issue on the project's GitHub. API keys, e-mail addresses, the user folder name, profile
+  names and everything said or answered in a call are removed before anything leaves the machine. A copy is
+  kept in `logs/reports/`. Without a token the browser opens a pre-filled issue to review and submit; with
+  `reports.github_token` in the local `config.json` the issue is created directly.
+- A failed answer now says which provider failed, why, and offers the fix: sign in to Claude again, open the
+  provider settings, retry, or report it. "No provider answered" on its own is gone.
+- "Sign in to Claude" button (failed answers and the provider list) opens a terminal on `claude /login` when
+  the Claude Code session has expired.
+- Pre-flight strip in Setup: transcription, AI answers and your context each show whether they are ready and
+  what is wrong in plain words; clicking one opens the place to fix it.
+- A provider that failed with a login, key, quota or model error is tried last for ten minutes, so the working
+  backup answers first instead of every answer waiting on the broken one.
+
+### Changed
+- New interface for both screens: one stylesheet, a side-navigated Setup, and a live HUD with two slim control
+  rows, a larger reading area and one primary action. Status labels are plain words instead of codes.
+
+### Fixed
+- When the call played through the speakers, the microphone transcribed the other person's words as yours,
+  which closed their turn early. Echoed text is now dropped and the app suggests headphones.
+- The readiness indicator only knew about Claude and Gemini; it now reflects whichever provider is primary.
+
 ## 1.0.0 — 2026-11-17
 
 First public release.

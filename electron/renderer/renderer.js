@@ -231,6 +231,50 @@ const I18N = {
     'gemini.listed': (n) => `${n} modelos Gemini disponibles`,
   },
 };
+Object.assign(I18N.en, {
+  'btn.screen': 'Screen', 'btn.setup': 'Setup', 'btn.end': 'End', 'setup.start': 'Start listening', 'setup.resume': 'Back to the HUD',
+  'stealth': 'Hidden from screen sharing', 'prov.button': 'AI providers', 'prov.default_lang': 'Language the other person usually speaks',
+  'im.pc_short': 'This computer', 'im.external_short': 'Phone', 'im.pc_tiny': 'PC', 'im.external_tiny': 'Phone',
+  'chk.stt': 'Transcription', 'chk.llm': 'AI answers', 'chk.ctx': 'Your context', 'chk.audio': 'Where the call comes from',
+  'chk.offline': 'The engine is not running yet…', 'chk.stt_loading': (e) => `${e} is starting…`, 'chk.stt_ok': (e) => `${e} ready`,
+  'chk.llm_ok': (n, m, k) => `${n} · ${m}${k ? ` · ${k} backup${k > 1 ? 's' : ''}` : ''}`, 'chk.llm_none': 'No provider configured — click to add one',
+  'chk.llm_fallback': (n, f) => `${n} is not ready; ${f} will answer`, 'chk.llm_broken': (n, why) => `${why} Click to fix.`,
+  'chk.ctx_ok': (name, n, w) => `${name}: ${n} document${n === 1 ? '' : 's'}, ${w.toLocaleString()} words`, 'chk.ctx_none': (name) => `${name} has no documents — answers will be generic`,
+  'err.claude_auth': 'The Claude Code session expired.', 'err.key': 'The API key is wrong or was revoked.', 'err.model': 'That model does not exist for this account. Press "Models" and pick one from the list.',
+  'err.quota': 'Out of quota or credit on this account.', 'err.network': 'The service could not be reached (network or timeout).', 'err.missing': 'Not set up on this computer yet.',
+  'err.empty': 'It returned an empty answer.',
+  'act.login': 'Sign in to Claude', 'act.providers': 'Open AI providers', 'act.retry': 'Try again', 'act.report': 'Report',
+  'fail.title': 'No answer could be generated', 'fail.none': 'No AI provider is configured.', 'fail.fallback': (n, why) => `${n} failed (${why}) — answered with the backup`,
+  'login.opened': 'A terminal opened: finish the sign-in there, then press "Test" on Claude.', 'hint.echo': 'Your microphone is picking up the call from the speakers. Use headphones so your own turns are detected correctly.',
+  'report.button': 'Report a problem', 'report.title': 'Report a problem',
+  'report.what': 'Creates a diagnostic report and files it as an issue on the project\'s GitHub. It includes the app version, your system, the provider names and the latest error messages. API keys, e-mail addresses, your user folder, profile names and everything said or answered in a call are removed first.',
+  'report.note_ph': 'What were you doing when it failed? (optional)', 'report.send': 'Create report', 'report.cancel': 'Cancel', 'report.no_errors': 'No errors recorded in this session.',
+  'report.sent': (u) => `Report filed: ${u}`, 'report.opened': 'GitHub opened with the report filled in — review it and press "Submit new issue". A full copy is on your clipboard.',
+  'report.saved': (f) => `Report saved to ${f}`, 'report.api_failed': (e) => `Could not file it automatically (${e}); opening GitHub instead.`,
+  'prov.failed': 'failing', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
+});
+Object.assign(I18N.es, {
+  'btn.screen': 'Pantalla', 'btn.setup': 'Ajustes', 'btn.end': 'Terminar', 'setup.start': 'Empezar a escuchar', 'setup.resume': 'Volver al HUD',
+  'stealth': 'Oculta al compartir pantalla', 'prov.button': 'Proveedores de IA', 'prov.default_lang': 'Idioma en que suele hablar la otra persona',
+  'im.pc_short': 'Este equipo', 'im.external_short': 'Teléfono', 'im.pc_tiny': 'PC', 'im.external_tiny': 'Tel',
+  'chk.stt': 'Transcripción', 'chk.llm': 'Respuestas con IA', 'chk.ctx': 'Tu contexto', 'chk.audio': 'De dónde viene la llamada',
+  'chk.offline': 'El motor todavía no está en marcha…', 'chk.stt_loading': (e) => `${e} está arrancando…`, 'chk.stt_ok': (e) => `${e} lista`,
+  'chk.llm_ok': (n, m, k) => `${n} · ${m}${k ? ` · ${k} de respaldo` : ''}`, 'chk.llm_none': 'Ningún proveedor configurado — haz clic para añadir uno',
+  'chk.llm_fallback': (n, f) => `${n} no está listo; responderá ${f}`, 'chk.llm_broken': (n, why) => `${why} Clic para arreglarlo.`,
+  'chk.ctx_ok': (name, n, w) => `${name}: ${n} documento${n === 1 ? '' : 's'}, ${w.toLocaleString()} palabras`, 'chk.ctx_none': (name) => `${name} no tiene documentos — las respuestas serán genéricas`,
+  'err.claude_auth': 'La sesión de Claude Code caducó.', 'err.key': 'La clave no es válida o fue revocada.', 'err.model': 'Ese modelo no existe para esta cuenta. Pulsa «Modelos» y elige uno de la lista.',
+  'err.quota': 'La cuenta se quedó sin cuota o crédito.', 'err.network': 'No se pudo conectar con el servicio (red o tiempo de espera).', 'err.missing': 'Todavía no está configurado en este equipo.',
+  'err.empty': 'Devolvió una respuesta vacía.',
+  'act.login': 'Iniciar sesión en Claude', 'act.providers': 'Abrir proveedores de IA', 'act.retry': 'Reintentar', 'act.report': 'Reportar',
+  'fail.title': 'No se pudo generar la respuesta', 'fail.none': 'No hay ningún proveedor de IA configurado.', 'fail.fallback': (n, why) => `${n} falló (${why}) — respondió el respaldo`,
+  'login.opened': 'Se abrió una terminal: termina ahí el inicio de sesión y luego pulsa «Probar» en Claude.', 'hint.echo': 'Tu micrófono está captando la llamada por los altavoces. Usa audífonos para que tus turnos se detecten bien.',
+  'report.button': 'Reportar problema', 'report.title': 'Reportar un problema',
+  'report.what': 'Crea un informe de diagnóstico y lo registra como incidencia (issue) en el GitHub del proyecto. Incluye la versión de la app, tu sistema, los nombres de los proveedores y los últimos mensajes de error. Antes se eliminan las claves, los correos, tu carpeta de usuario, los nombres de perfiles y todo lo que se dijo o respondió en la llamada.',
+  'report.note_ph': '¿Qué estabas haciendo cuando falló? (opcional)', 'report.send': 'Crear informe', 'report.cancel': 'Cancelar', 'report.no_errors': 'No hay errores registrados en esta sesión.',
+  'report.sent': (u) => `Informe registrado: ${u}`, 'report.opened': 'Se abrió GitHub con el informe ya escrito: revísalo y pulsa «Submit new issue». Tienes una copia completa en el portapapeles.',
+  'report.saved': (f) => `Informe guardado en ${f}`, 'report.api_failed': (e) => `No se pudo registrar automáticamente (${e}); se abre GitHub.`,
+  'prov.failed': 'con error', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
+});
 let uiLang = 'en';
 const t = (key, ...args) => {
   const v = (I18N[uiLang] && I18N[uiLang][key]) ?? I18N.en[key] ?? key;
@@ -346,7 +390,7 @@ function reuseCard(card, ev) {
   cards.set(ev.gen_id, card);
   card.gen_id = ev.gen_id;
   if (ev.turn_id != null) { card.turn_id = ev.turn_id; turnCards.set(ev.turn_id, card); }
-  card.openerText = ''; card.fullText = ''; card.openerMs = null; card.storyText = '';
+  card.openerText = ''; card.fullText = ''; card.openerMs = null; card.storyText = ''; card.failed = false;
   card.streaming = { opener: false, full: false };
   card.retrieval = ev.retrieval || card.retrieval || [];
   card.el.classList.remove('updating');
@@ -399,6 +443,7 @@ function paintCard(card) {
   if (card.timer) return;
   card.timer = requestAnimationFrame(() => {
     card.timer = null;
+    if (card.failed) return;
     card.opener.textContent = card.openerText.trim();
     card.full.innerHTML = renderSpeech(card.fullText) + (card.streaming.full ? '<span class="cursor"></span>' : '');
     if (!userScrolledUp && card === latestCard) feed().scrollTop = feed().scrollHeight;
@@ -408,10 +453,11 @@ function cardMeta(card, ev) {
   const s = lastStatus.settings || {};
   const parts = [];
   if (ev.provider) {
-    const model = ev.provider === 'gemini' ? s.gemini_model : s.claude_model;
+    const model = ((lastStatus.providers_info || {})[ev.provider] || {}).model;
     parts.push(`${ev.provider}${model ? ' · ' + model : ''}${ev.warm === true ? ' · warm' : ev.warm === false ? ' · cold' : ''} · ${t('tone.' + (s.tone || 'natural'))}/${t('len.' + (s.length || 'medium'))} · ${ev.first_token_s != null ? 'first word ' + ev.first_token_s + 's · ' : ''}${ev.elapsed_s}s`);
   } else if (ev.cancelled) parts.push(t('meta.cancelled'));
   else parts.push(t('meta.noprovider'));
+  if (ev.provider && (ev.errors || []).length) { const f = splitError(ev.errors[0]); parts.push(t('fail.fallback', provLabel(f.provider), explainError(f.provider, f.message).text.replace(/\.$/, ''))); }
   if (card.openerMs) parts.push(`${t('card.opener')} ${card.openerMs}s`);
   if (card.retrieval && card.retrieval.length) parts.push(t('card.ctx', card.retrieval.length));
   if (card.storyText) parts.push(card.storyText);
@@ -434,14 +480,106 @@ function setPill(pill, state, label) {
   if (state) pill.classList.add(state);
   if (label !== undefined) pill.querySelector('span').textContent = label;
 }
-function toast(msg, bad = false) {
+function toast(msg, bad = false, action = null) {
   const id = mode === 'live' ? 'toast-live' : 'toast-setup';
   const el = $('#' + id);
   el.textContent = msg;
   el.classList.toggle('bad', bad);
+  if (action) el.appendChild(actionButton(action));
   clearTimeout(toastTimers[id]);
-  toastTimers[id] = setTimeout(() => { el.textContent = ''; el.classList.remove('bad'); }, 7000);
+  toastTimers[id] = setTimeout(() => { el.textContent = ''; el.classList.remove('bad'); }, action ? 15000 : 7000);
 }
+
+// ------------------------------------------------------------------ 1.0.1: errors a person can act on
+const recentErrors = [];
+function rememberError(message) {
+  const m = String(message || '').trim(); if (!m) return;
+  if (recentErrors.length && recentErrors[recentErrors.length - 1] === m) return;
+  recentErrors.push(m); if (recentErrors.length > 20) recentErrors.shift();
+  const c = $('#report-count'); if (c) { c.textContent = String(recentErrors.length); c.classList.remove('hidden'); }
+}
+function provLabel(name) {
+  const p = (lastStatus.providers_info || {})[name];
+  return p ? String(p.label).replace(/\s*\(.*\)$/, '') : name || '';
+}
+function splitError(line) {
+  const m = /^([a-z]+): ([\s\S]*)$/.exec(String(line || ''));
+  return m && (lastStatus.providers_info || {})[m[1]] ? { provider: m[1], message: m[2] } : { provider: '', message: String(line || '') };
+}
+/** Turn a raw provider / backend message into: what happened, and the one action that fixes it. */
+function explainError(provider, message) {
+  const m = String(message || '');
+  const out = (code, action) => ({ code, text: t('err.' + code), action, raw: m });
+  if (/oauth|session expired|failed to authenticate|\/login|not logged in/i.test(m) && (provider === 'claude' || /claude|oauth/i.test(m))) return out('claude_auth', 'login');
+  if (/\b429\b|quota|rate.?limit|billing|credit|insufficient/i.test(m)) return out('quota', 'providers');
+  if (/\b401\b|\b403\b|invalid api key|api key not valid|incorrect api key|unauthori[sz]ed|authenticat|permission/i.test(m)) return out('key', 'providers');
+  if (/\b404\b|model.*(not found|does not exist|not supported)|not found.*model|unknown model/i.test(m)) return out('model', 'providers');
+  if (/timed? ?out|ENOTFOUND|ECONN|connection|network|getaddrinfo|unreachable|name resolution/i.test(m)) return out('network', 'retry');
+  if (/not installed|not on path|no api key|not configured|missing api key|is not recognized|command not found/i.test(m)) return out('missing', 'providers');
+  if (/empty response/i.test(m)) return out('empty', 'retry');
+  return { code: 'other', text: m.slice(0, 220), action: provider ? 'providers' : null, raw: m };
+}
+const ACTIONS = {
+  login: { label: 'act.login', run: () => window.copilot.send({ type: 'claude_login' }) },
+  providers: { label: 'act.providers', run: () => { if (mode === 'live') window.copilot.send({ type: 'enter_setup' }); setTimeout(() => openProviders(false), mode === 'live' ? 250 : 0); } },
+  retry: { label: 'act.retry', run: () => window.copilot.send({ type: 'generate' }) },
+  report: { label: 'act.report', run: () => openReport() },
+};
+function actionButton(name, primary = false) {
+  const a = ACTIONS[name], b = document.createElement('button');
+  b.className = `btn small nodrag${primary ? ' primary' : ''}`; b.textContent = t(a.label);
+  b.addEventListener('click', (e) => { e.stopPropagation(); a.run(); });
+  return b;
+}
+/** A failed answer says which provider failed, why, and offers the fix — never just "no provider answered". */
+function renderFailure(card, ev) {
+  card.failed = true;
+  const errs = (ev.errors || []).map(splitError);
+  const box = document.createElement('div'); box.className = 'fail';
+  const h = document.createElement('b'); h.textContent = t('fail.title'); box.appendChild(h);
+  const acts = new Set();
+  if (!errs.length) { const p = document.createElement('p'); p.textContent = t('fail.none'); box.appendChild(p); acts.add('providers'); }
+  const ul = document.createElement('ul');
+  for (const e of errs) {
+    const x = explainError(e.provider, e.message);
+    const li = document.createElement('li');
+    const name = document.createElement('strong'); name.textContent = provLabel(e.provider) || 'App';
+    const why = document.createElement('span'); why.textContent = ` ${x.text}`;
+    li.append(name, why);
+    if (x.code !== 'other') { const raw = document.createElement('small'); raw.textContent = x.raw.slice(0, 160); li.appendChild(raw); }
+    ul.appendChild(li);
+    if (x.action) acts.add(x.action);
+    rememberError(`${e.provider || 'app'}: ${e.message}`);
+  }
+  if (errs.length) box.appendChild(ul);
+  const row = document.createElement('div'); row.className = 'fail-actions';
+  const order = ['login', 'providers', 'retry'].filter((a) => acts.has(a));
+  if (!order.includes('retry')) order.push('retry');
+  order.forEach((a, i) => row.appendChild(actionButton(a, i === 0)));
+  row.appendChild(actionButton('report'));
+  box.appendChild(row);
+  card.opener.textContent = ''; card.full.innerHTML = ''; card.full.appendChild(box);
+  card.el.classList.add('failed');
+}
+
+// ------------------------------------------------------------------ 1.0.1: problem report
+function openReport() {
+  const list = $('#report-errors'); list.innerHTML = '';
+  const items = recentErrors.slice(-6);
+  if (!items.length) { const li = document.createElement('li'); li.className = 'dim'; li.textContent = t('report.no_errors'); list.appendChild(li); }
+  for (const m of items) { const li = document.createElement('li'); li.textContent = m.slice(0, 200); list.appendChild(li); }
+  $('#report-result').textContent = '';
+  $('#report-modal').classList.remove('hidden');
+  setTimeout(() => $('#report-note').focus(), 30);
+}
+function onReportStatus(ev) {
+  const msg = ev.state === 'sent' ? t('report.sent', ev.url) : ev.state === 'opened' ? t('report.opened') : ev.state === 'api_failed' ? t('report.api_failed', ev.error || '') : t('report.saved', ev.file || '');
+  if ($('#report-modal').classList.contains('hidden')) toast(msg, ev.state === 'api_failed');
+  else $('#report-result').textContent = msg;
+  if (ev.state !== 'api_failed') { recentErrors.length = 0; $('#report-count').classList.add('hidden'); $('#report-note').value = ''; setTimeout(() => $('#report-modal').classList.add('hidden'), 3500); toast(msg); }
+}
+window.addEventListener('error', (e) => { try { window.copilot.send({ type: 'renderer_error', message: `${e.message} @ ${String(e.filename || '').split('/').pop()}:${e.lineno}` }); } catch {} });
+window.addEventListener('unhandledrejection', (e) => { try { window.copilot.send({ type: 'renderer_error', message: `unhandled: ${String((e.reason && e.reason.message) || e.reason).slice(0, 300)}` }); } catch {} });
 function prettyAccel(a) {
   if (!a) return '';
   return a.replace('CommandOrControl', platform === 'darwin' ? '⌘' : 'Ctrl').replace('Alt', platform === 'darwin' ? '⌥' : 'Alt').replace('Shift', '⇧');
@@ -484,13 +622,17 @@ $('#btn-start').addEventListener('click', () => {
 $('#btn-setup').addEventListener('click', () => window.copilot.send({ type: 'enter_setup' }));
 $('#btn-min').addEventListener('click', () => window.copilot.send({ type: 'minimize' }));
 $('#btn-quit').addEventListener('click', () => window.copilot.send({ type: 'quit' }));
+$('#btn-report').addEventListener('click', () => openReport());
+$('#report-cancel').addEventListener('click', () => $('#report-modal').classList.add('hidden'));
+$('#report-send').addEventListener('click', () => { $('#report-result').textContent = '…'; window.copilot.send({ type: 'report_problem', note: $('#report-note').value.trim() }); });
+$$('.check[data-go]').forEach((b) => b.addEventListener('click', () => { const go = b.dataset.go; if (go === 'providers') openProviders(false); else showTab(go); }));
 
 // ------------------------------------------------------------------ tabs
 let activeTab = 'profile';
-$$('.tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+$$('.tab[data-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 function showTab(name) {
   activeTab = name;
-  $$('.tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+  $$('.tab[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
   $$('.tabpane').forEach((p) => p.classList.toggle('hidden', p.dataset.pane !== name));
   if (name === 'audio') window.copilot.send({ type: 'list_audio_devices' });
   if (name === 'sessions') loadSessions();
@@ -507,15 +649,14 @@ function renderStatus() {
   setPill($('#pill-link-setup'), ev.backend_link === false ? 'bad' : 'ok', 'LINK');
   if (ev.stt_error) setPill($('#pill-stt-setup'), 'bad', 'STT ERROR');
   else setPill($('#pill-stt-setup'), ev.stt_ready ? 'ok' : 'busy', ev.stt_ready ? 'STT' : 'STT LOADING');
-  const primary = s.primary === 'gemini' ? 'gemini' : 'claude';
-  setPill($('#pill-provider-setup'), p[primary] ? 'ok' : p.claude || p.gemini ? 'warn' : 'bad', (p[primary] ? primary : p.claude ? 'claude' : p.gemini ? 'gemini' : 'no llm').toUpperCase());
-  $('#pill-provider-setup').title = primary === 'gemini' ? s.gemini_model || '' : s.claude_model || '';
+  const primary = s.primary || 'claude';
+  renderPreflight(ev);
   $('#live-banner').classList.toggle('hidden', !ev.armed);
   $('#btn-start').querySelector('span').textContent = ev.armed ? t('setup.resume') : t('setup.start');
   // live header
   const live = $('#pill-live');
-  let st = 'ok', label = 'LISTEN';
-  if (!ev.stt_ready && !ev.stt_error) { st = 'busy'; label = 'STT LOADING'; }
+  let st = 'ok', label = t('status.listening');
+  if (!ev.stt_ready && !ev.stt_error) { st = 'busy'; label = t('status.loading'); }
   if (!ev.listening) { st = 'warn'; label = t('status.muted'); }
   if (!ev.armed) { st = 'warn'; label = t('status.paused'); }
   if (ev.session && ev.session.analyzing) { st = 'busy'; label = t('status.analyzing'); }
@@ -533,7 +674,6 @@ function renderStatus() {
   $('#pill-stt-setup').querySelector('span:last-child').textContent = sttLabel(ev);
   if (ev.stt && ev.stt.ready === false && !ev.stt_error && ev.stt.error) setPill($('#pill-stt-live'), 'warn', sttLabel(ev));
   loadSttForm();
-  setPill($('#pill-model-live'), p[primary] ? 'ok' : p.claude || p.gemini ? 'warn' : 'bad', (primary === 'gemini' ? s.gemini_model : s.claude_model) || primary.toUpperCase());
   if (ev.diag) { lastDiag = { ...(lastDiag || {}), ...ev.diag, queue: (lastDiag || {}).queue || 0, armed: ev.armed, chunks: ev.diag.chunks }; renderDiag(); }
   if (s.input_mode && s.input_mode !== inputMode) renderInputMode(s.input_mode, true);
   const lang = s.language || 'auto';
@@ -554,6 +694,29 @@ function renderStatus() {
   $('#ctx-total').textContent = n ? t('ctx.total', ctx.total_words || 0, n) + (ctx.truncated ? t('ctx.truncated') : '') : '';
   renderProfileSelect();
   renderAudioState();
+}
+function setCheck(id, state, text) {
+  const el = $('#' + id); if (!el) return;
+  el.classList.remove('ok', 'warn', 'bad', 'busy'); el.classList.add(state);
+  $('#' + id + '-text').textContent = text;
+}
+const STT_NAMES = { deepgram: 'Deepgram', whisper_local: 'Whisper local', groq_whisper: 'Groq Whisper' };
+/** Setup header: the three things that must be ready before a call, each saying what is wrong in plain words. */
+function renderPreflight(ev) {
+  const s = ev.settings || {}, info = ev.providers_info || {};
+  const eng = STT_NAMES[ev.stt_engine || s.stt_engine] || 'STT';
+  if (ev.backend_link === false) setCheck('chk-stt', 'busy', t('chk.offline'));
+  else if (ev.stt_error) setCheck('chk-stt', 'bad', String(ev.stt_error).slice(0, 140));
+  else setCheck('chk-stt', ev.stt_ready ? 'ok' : 'busy', ev.stt_ready ? t('chk.stt_ok', eng) : t('chk.stt_loading', eng));
+  const primary = s.primary || 'claude', pi = info[primary] || {};
+  const healthy = PROVIDER_ORDER.filter((n) => (info[n] || {}).available && !(info[n] || {}).error);
+  if (ev.backend_link === false) setCheck('chk-llm', 'busy', t('chk.offline'));
+  else if (pi.error) setCheck('chk-llm', healthy.length ? 'warn' : 'bad', t('chk.llm_broken', provLabel(primary), explainError(primary, pi.error).text));
+  else if (pi.available) setCheck('chk-llm', 'ok', t('chk.llm_ok', provLabel(primary), pi.model || '', healthy.filter((n) => n !== primary).length));
+  else if (healthy.length) setCheck('chk-llm', 'warn', t('chk.llm_fallback', provLabel(primary), provLabel(healthy[0])));
+  else setCheck('chk-llm', 'bad', t('chk.llm_none'));
+  const ctx = ev.context || {}, n = (ev.context_files || []).length, name = (ev.profile || {}).name || 'default';
+  setCheck('chk-ctx', n ? 'ok' : 'warn', n ? t('chk.ctx_ok', name, n, ctx.total_words || 0) : t('chk.ctx_none', name));
 }
 function sttLabel(ev) {
   const e = ev.stt_engine || (ev.settings || {}).stt_engine || '';
@@ -1089,7 +1252,7 @@ function applyHudOpacity(v, announce = true) {
   const a = Math.max(0.35, Math.min(0.95, Number(v) || 0.75));
   document.documentElement.style.setProperty('--hud-alpha', String(a));
   let hint = $('#opacity-hint');
-  if (!hint) { hint = document.createElement('span'); hint.id = 'opacity-hint'; hint.className = 'opacity-hint dim'; $('.live-foot').insertBefore(hint, $('#toast-live')); }
+  if (!hint) { hint = document.createElement('span'); hint.id = 'opacity-hint'; hint.className = 'opacity-hint dim'; $('.live-foot').appendChild(hint); }
   hint.textContent = t('opacity.hint', a);
   if (announce) toast(t('opacity.hint', a));
 }
@@ -1157,7 +1320,7 @@ function buildProviders() {
       ${cli ? '<span class="dim cli-note"></span>' : `<input type="password" class="key" spellcheck="false" autocomplete="off" />`}
       <input type="text" class="model" spellcheck="false" list="prov-models-${name}" placeholder="${t('prov.model_ph')}" /><datalist id="prov-models-${name}"></datalist>
       <button class="btn small models">${t('prov.models')}</button><button class="btn small test">${t('prov.test')}</button>
-      <div class="result"></div>`;
+      <div class="result"></div><div class="problem hidden"></div>`;
     list.appendChild(row);
     row.querySelector('.model').value = p.model || '';
     row.querySelector('input[type="radio"]').addEventListener('change', () => { provPrimary = name; paintProviders(); });
@@ -1181,6 +1344,16 @@ function paintProviders() {
     const key = row.querySelector('.key');
     if (key && document.activeElement !== key && !key.value) key.placeholder = p.key_set ? t('prov.key_saved') : t('prov.key_ph');
     const note = row.querySelector('.cli-note'); if (note) note.textContent = p.available ? t('prov.cli_ok') : t('prov.cli_missing');
+    const prob = row.querySelector('.problem');
+    prob.classList.toggle('hidden', !p.error); prob.textContent = '';
+    row.classList.toggle('broken', Boolean(p.error));
+    if (p.error) {
+      const x = explainError(name, p.error);
+      st.textContent = t('prov.failed'); st.className = 'st bad';
+      const txt = document.createElement('span'); txt.textContent = x.text; prob.appendChild(txt);
+      if (x.code !== 'other') { const raw = document.createElement('small'); raw.textContent = x.raw.slice(0, 180); prob.appendChild(raw); }
+      if (x.action === 'login') prob.appendChild(actionButton('login', true));
+    }
   }
 }
 function renderProviders() {
@@ -1201,7 +1374,8 @@ function onProviderTest(ev) {
   if (ev.state === 'running') { res.className = 'result'; res.textContent = t('prov.testing'); return; }
   provResults[ev.provider] = ev.ok;
   res.className = `result ${ev.ok ? 'ok' : 'bad'}`;
-  res.textContent = ev.ok ? t('prov.test_ok', ev.ms, ev.model || '') : t('prov.test_bad', ev.error || 'failed');
+  res.textContent = ev.ok ? t('prov.test_ok', ev.ms, ev.model || '') : '';   // a failure is explained in the row's problem box (from status)
+  if (!ev.ok && !((lastStatus.providers_info || {})[ev.provider] || {}).error) res.textContent = t('prov.test_bad', ev.error || 'failed');
 }
 function onProviderModels(ev) {
   const row = provRow(ev.provider); if (!row) return;
@@ -1268,7 +1442,7 @@ function renderUpdate(ev) {
   const label = { checking: t('upd.checking'), available: t('upd.available', v), downloading: t('upd.downloading', v), installing: t('upd.installing', v),
     restarting: t('upd.restarting'), staged: t('upd.staged', v), up_to_date: t('upd.up_to_date', cur), error: t('upd.error', ev.error || '') }[ev.state] || t('upd.unconfigured', cur);
   txt.textContent = label;
-  btn.className = `btn small ghost nodrag update-pill ${ev.state || ''}`;
+  btn.className = `linkbtn nodrag update-pill ${ev.state || ''}`;
   btn.title = ev.state === 'error' ? ev.error : `${ev.repo || ''} · v${cur}${ev.notes ? '\n\n' + ev.notes : ''}`;
   if (['available', 'staged', 'restarting', 'error'].includes(ev.state)) toast(label, ev.state === 'error');
 }
@@ -1753,16 +1927,21 @@ window.copilot.onEvent((ev) => {
     case 'llm_end': {
       if (ev.gen_id === currentGen) {
         streaming = false; scheduleRender(); renderStatus();
-        if (!ev.provider && !ev.cancelled) toast((ev.errors || []).join(' | ') || 'Analysis failed', true);
+        if (!ev.provider && !ev.cancelled) { const f = splitError((ev.errors || [])[0] || 'Analysis failed'), x = explainError(f.provider, f.message); (ev.errors || []).forEach(rememberError); toast([provLabel(f.provider), x.text].filter(Boolean).join(': '), true, x.action); }
         break;
       }
       const card = cards.get(ev.gen_id); if (!card) break;
       if (ev.part === 'opener') { card.streaming.opener = false; card.openerMs = ev.elapsed_s; if (!ev.provider || ev.errors.length) card.openerText = ''; paintCard(card); break; }
       card.streaming.full = false; paintCard(card); renderStatus();
       if (ev.cancelled && card.turn_id != null && card.el.classList.contains('updating')) break;   // v16: aborted, a replacement is coming
-      cardMeta(card, ev);
+      if (ev.provider || ev.cancelled) cardMeta(card, ev); else card.meta.textContent = '';
       if (ev.provider) renderLatency(ev);
-      if (!ev.provider && !ev.cancelled) { toast((ev.errors || []).join(' | ') || 'Generation failed', true); if (!card.fullText && !card.openerText) card.full.textContent = t('answer.none'); }
+      if (!ev.provider && !ev.cancelled) renderFailure(card, ev);
+      else if (ev.provider && (ev.errors || []).length) {
+        const f = splitError(ev.errors[0]), x = explainError(f.provider, f.message);
+        rememberError(`${f.provider}: ${f.message}`);
+        toast(t('fail.fallback', provLabel(f.provider), x.text.replace(/\.$/, '')), true, x.action === 'login' ? 'login' : null);
+      }
       break;
     }
     case 'session':
@@ -1795,7 +1974,10 @@ window.copilot.onEvent((ev) => {
     case 'confirm_end_session': askEndSession(); break;
     case 'return_live': window.copilot.send({ type: 'enter_live' }); break;
     case 'open_settings': window.copilot.send({ type: 'enter_setup' }); break;
-    case 'error': toast(ev.message, true); break;
+    case 'error': { rememberError(ev.message); const f = splitError(ev.message), x = explainError(f.provider, f.message); toast(x.code === 'other' ? ev.message : [provLabel(f.provider), x.text].filter(Boolean).join(': '), true, x.code === 'other' ? null : x.action); break; }
+    case 'report_status': onReportStatus(ev); break;
+    case 'claude_login': toast(t('login.opened')); break;
+    case 'hint': if (ev.code === 'echo') toast(t('hint.echo'), true); else if (ev.message) toast(ev.message); break;
     case 'log': if (/^READY/.test(ev.message)) toast(t('toast.ready')); break;
     default: break;
   }

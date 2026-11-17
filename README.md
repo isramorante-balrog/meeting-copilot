@@ -74,6 +74,24 @@ Your `config.json`, profiles, document bank and logs are never touched by an upd
 `"updates": {"enabled": false}` in `config.json`. Maintainers: bump `version` in `package.json` and push a tag
 `vX.Y.Z`; the release workflow publishes it.
 
+## When something fails
+
+A failed answer shows which provider failed and why, with the fix next to it:
+
+| Message | What to do |
+| --- | --- |
+| The Claude Code session expired | Press **Iniciar sesión en Claude** (it runs `claude /login` in a terminal), then **Probar** in *Proveedores de IA* |
+| The API key is wrong or was revoked | Paste a new key in *Proveedores de IA* |
+| That model does not exist for this account | Press **Modelos** and pick one from the list |
+| Out of quota or credit | Choose another provider as primary, or top up the account |
+
+**Reportar problema** files a diagnostic report as an issue on this repository. Before it leaves your machine the
+app removes API keys, e-mail addresses, your user folder name, profile names and every transcribed or generated
+sentence. Issues on a public repository are public, so the report opens in your browser for you to read before
+you submit it. To send reports somewhere else, set `reports.repo` in `config.json` (for example to a private
+repository). A maintainer can add a fine-grained token with *Issues: read and write* as `reports.github_token`
+in their own `config.json` to file reports without the browser step; the token is never part of the app.
+
 ## Privacy
 
 - Audio leaves your machine only for the transcription engine you selected (Deepgram or Groq); local Whisper

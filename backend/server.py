@@ -115,6 +115,7 @@ class Copilot:
         self.gemini_fast = GeminiClient(llm["gemini_api_key_env"], llm.get("fast_gemini_model", "gemini-2.5-flash"), llm.get("gemini_api_key", ""))
         # ChatGPT (OpenAI) / Grok (xAI) / DeepSeek: OpenAI-compatible streaming clients
         self.compat = {n: OpenAICompatClient(n, (llm.get("providers") or {}).get(n) or {}) for n in COMPAT_NAMES}
+        self.provider_errors: dict[str, dict] = {}   # name -> {message, t, sticky}: last failure, shown in the HUD
         self.use_gemini_classifier = False  # zero-latency local heuristics only (classifier.py)
         self._pending: dict[str, dict] = {}  # channel -> {"line": transcript line being assembled from rolling chunks}
         self._spec: dict | None = None       # in-flight speculative draft (see _maybe_speculate)
@@ -312,11 +313,13 @@ class Copilot:
     def _on_interim(self, gen: int, channel: str, text: str) -> None:
         if gen != self._stt_gen or not self.armed:
             return
+        if channel == "me" and text and self._is_echo(text):
+            return
         self._set_interim(channel, text)
         if channel == "them" and text:
             # Deepgram interim words = the speaker is still talking: abort/hold the answer for the open turn
             self._on_remote_activity(text)
-        elif channel == "me" and text:
+        elif channel == "me" and text and not self._is_echo(text):
             self._me_talking(text)
 
     def _on_piece(self, gen: int, channel: str, text: str, final: bool) -> None:
@@ -522,8 +525,29 @@ class Copilot:
             return True
         return looks_complete(pend["line"]["text"])
 
+    def _is_echo(self, text: str) -> bool:
+        """Mic text that repeats what the remote side just said = the call playing through the speakers.
+        Without this the echo shows up as YO, closes the remote turn and pollutes the transcript."""
+        words = [w for w in re.findall(r"[\wáéíóúñü']+", (text or "").lower()) if len(w) > 1]
+        if len(words) < 3:
+            return False
+        now = time.time()
+        recent = [l["text"] for l in self.transcript[-6:] if l["channel"] == "them" and now - l.get("t_last", l["t"]) < 12]
+        recent.append(self.interim.get("them") or "")
+        pool = set(re.findall(r"[\wáéíóúñü']+", " ".join(recent).lower()))
+        if not pool:
+            return False
+        return sum(1 for w in words if w in pool) / len(words) >= 0.7
+
     # -- rolling pieces of one speaker turn are merged into a single transcript line ------------
     def _append_piece(self, channel: str, text: str, final: bool) -> None:
+        if channel == "me" and self.input_mode != "external" and self._is_echo(text):
+            self.diag["echo_dropped"] = self.diag.get("echo_dropped", 0) + 1
+            if self.diag["echo_dropped"] == 3:
+                self.broadcast({"type": "hint", "code": "echo", "message": "The microphone is picking up the call from the speakers. Use headphones for cleaner turns."})
+            if final and channel in self._pending:
+                self._finish_turn(channel)
+            return
         pend = self._pending.get(channel)
         if pend is not None and time.time() - pend["line"]["t_last"] > 2.5:
             # the previous piece never got its end-of-utterance: close it properly (log + turn buffer) instead of
@@ -1120,10 +1144,12 @@ class Copilot:
                     text = provider.stream(system, user, emit, cancel)
                 if text.strip():
                     used = provider.name
+                    self.provider_errors.pop(provider.name, None)
                     break
                 errors.append(f"{provider.name}: empty response")
             except Exception as exc:
                 errors.append(f"{provider.name}: {exc}")
+                self.note_provider_error(provider.name, str(exc))
                 log.warning("%s failed: %s", provider.name, exc)
         log.info("gen %d (%s/%s/%s) via %s in %.1fs%s", gen_id, mode, style["tone"], style["length"], used,
                  time.time() - t0, " [cancelled]" if cancel.is_set() else "")
@@ -1166,7 +1192,23 @@ class Copilot:
         primary = self.cfg["general"].get("primary", "claude")
         names = [primary] + [n for n in self.PROVIDER_NAMES if n != primary]
         out = [self.provider(n) for n in names if self.provider(n) is not None]
-        return [p for i, p in enumerate(out) if i == 0 or p.available()]
+        out = [p for i, p in enumerate(out) if i == 0 or p.available()]
+        # a provider that just failed for a reason retrying will not fix (expired login, bad key, no credit)
+        # is tried last for 10 minutes, so every answer does not pay for the same failure first
+        now = time.time()
+        sick = {n for n, e in self.provider_errors.items() if e.get("sticky") and now - e["t"] < 600}
+        return [p for p in out if p.name not in sick] + [p for p in out if p.name in sick]
+
+    _STICKY_ERR = re.compile(r"authenticat|oauth|log ?in|401|403|invalid api key|api key not valid|incorrect api key|"
+                             r"quota|billing|credit|not found|404|permission", re.I)
+
+    def note_provider_error(self, name: str, message: str) -> None:
+        self.provider_errors[name] = {"message": str(message)[:400], "t": time.time(),
+                                      "sticky": bool(self._STICKY_ERR.search(str(message)))}
+
+    def clear_provider_error(self, name: str) -> None:
+        if self.provider_errors.pop(name, None) is not None:
+            self.broadcast_status()
 
     def providers_info(self) -> dict:
         llm = self.cfg["llm"]
@@ -1180,6 +1222,10 @@ class Copilot:
             info[n] = {"label": c.preset["label"], "available": c.available(), "model": c.model, "kind": "key",
                        "key_set": bool(c.api_key), "keys_url": c.preset["keys_url"], "vision": c.supports_vision,
                        "base_url": c.base_url}
+        for n, e in self.provider_errors.items():
+            if n in info:
+                info[n]["error"] = e["message"]
+                info[n]["error_age_s"] = int(time.time() - e["t"])
         return info
 
     def set_provider(self, name: str, api_key: str | None = None, model: str | None = None, base_url: str | None = None) -> None:
@@ -1229,7 +1275,12 @@ class Copilot:
                     res = {"ok": False, "sample": "", "error": str(exc).splitlines()[0][:300]}
                 res["ms"] = int((time.time() - t0) * 1000)
                 res["model"] = getattr(p, "model", None)
+            if res.get("ok"):
+                self.provider_errors.pop(name, None)
+            else:
+                self.note_provider_error(name, res.get("error") or "test failed")
             self.broadcast({"type": "provider_test", "provider": name, "state": "done", **res})
+            self.broadcast_status()
 
         threading.Thread(target=run, name=f"test-{name}", daemon=True).start()
 
@@ -2017,6 +2068,8 @@ class Copilot:
             self.end_session(analyze=False)
         elif cmd == "set_provider":
             self.set_provider(str(msg.get("provider") or ""), msg.get("api_key"), msg.get("model"), msg.get("base_url"))
+        elif cmd == "provider_ok":
+            self.clear_provider_error(str(msg.get("provider") or ""))
         elif cmd == "test_provider":
             self.test_provider(str(msg.get("provider") or ""))
         elif cmd == "list_models":

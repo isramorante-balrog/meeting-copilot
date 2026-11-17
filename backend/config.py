@@ -189,7 +189,7 @@ def context_dir(cfg: dict) -> Path:
     return profiles_dir(cfg) / (cfg["general"].get("active_profile") or "default")
 
 
-ELECTRON_OWNED = ("hud", "updates")
+ELECTRON_OWNED = ("hud", "updates", "reports")
 
 
 def save_config(cfg: dict) -> Path:

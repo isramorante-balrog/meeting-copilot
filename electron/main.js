@@ -17,7 +17,7 @@
  * State that IPC handlers depend on lives in a single `state` object created before any handler runs,
  * so there are no free-floating globals that can be undefined (`state.profiles`, `state.bank`).
  */
-const { app, BrowserWindow, globalShortcut, ipcMain, screen, dialog, Tray, Menu, nativeImage, shell, session, desktopCapturer } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, screen, dialog, Tray, Menu, nativeImage, shell, session, desktopCapturer, clipboard } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -25,6 +25,7 @@ const { spawn, spawnSync } = require('child_process');
 const WebSocket = require('ws');
 const { ProfileManager, listSessions, readTextFile, terminateParser, SLOT_TO_CATEGORY } = require('./context_manager');
 const { Updater } = require('./updater');
+const { Reporter } = require('./reporter');
 
 // ------------------------------------------------------------------ paths & config
 const ROOT = path.join(__dirname, '..');
@@ -58,6 +59,9 @@ console.error = logLine;
 const DEFAULT_CONFIG = {
   backend: { host: '127.0.0.1', port: 8765, python: '' },
   updates: { enabled: true, auto_install: true, repo: 'isramorante-balrog/meeting-copilot', check_hours: 6 },
+  // Problem reports become GitHub issues on `repo`. Without a token the browser opens a pre-filled issue;
+  // with a maintainer token (Issues: read/write) they are created directly. See electron/reporter.js.
+  reports: { repo: 'isramorante-balrog/meeting-copilot', github_token: '', include_log: true },
   hud: { width: 520, height: 460, max_width: 520, top: 6, opacity: 0.75, font_size: 17, setup_width: 1040, setup_height: 720,
          nudge_px: 40, auto_vision: false, auto_vision_interval_s: 5 },
   hotkeys: {
@@ -86,6 +90,7 @@ function loadConfig() {
     ...user,
     backend: { ...DEFAULT_CONFIG.backend, ...(user.backend || {}) },
     updates: { ...DEFAULT_CONFIG.updates, ...(user.updates || {}) },
+    reports: { ...DEFAULT_CONFIG.reports, ...(user.reports || {}) },
     hud,
     hotkeys,
   };
@@ -175,6 +180,47 @@ function setGhost(on) {
   sendToRenderer({ type: 'ghost', enabled: state.ghost });
   console.log(`[main] ghost mode ${state.ghost ? 'ON (click-through)' : 'off'}`);
 }
+/** Build the diagnostic report, keep a copy in logs/reports/, and file it as a GitHub issue. */
+async function reportProblem(note) {
+  if (!reporter) return;
+  const report = reporter.build(note);
+  let file = '';
+  try { file = reporter.save(report); } catch (e) { console.error('[report] save failed:', e.message); }
+  const { repo, token } = reporter.cfg();
+  try { clipboard.writeText(`# ${report.title}\n\n${report.body}`); } catch {}
+  if (token) {
+    try {
+      const url = await reporter.postIssue(report);
+      sendToRenderer({ type: 'report_status', state: 'sent', url, file });
+      return;
+    } catch (e) {
+      console.error('[report] API failed:', e.message);
+      sendToRenderer({ type: 'report_status', state: 'api_failed', error: e.message, file });
+    }
+  }
+  if (repo) {
+    shell.openExternal(reporter.issueUrl(report));
+    sendToRenderer({ type: 'report_status', state: 'opened', file });
+  } else sendToRenderer({ type: 'report_status', state: 'saved', file });
+}
+
+/** Open a terminal on the Claude Code login so an expired session can be renewed without knowing the CLI. */
+function claudeLogin() {
+  try {
+    const env = { ...process.env }; delete env.CLAUDECODE; delete env.CLAUDE_CODE_ENTRYPOINT;
+    if (process.platform === 'win32') {
+      spawn('cmd.exe', ['/c', 'start', 'Claude login', 'cmd', '/k', 'claude /login'], { detached: true, stdio: 'ignore', env }).unref();
+    } else if (process.platform === 'darwin') {
+      spawn('osascript', ['-e', 'tell application "Terminal" to do script "claude /login"', '-e', 'tell application "Terminal" to activate'], { detached: true, stdio: 'ignore', env }).unref();
+    } else {
+      spawn('sh', ['-c', 'x-terminal-emulator -e claude /login || gnome-terminal -- claude /login || xterm -e claude /login'], { detached: true, stdio: 'ignore', env }).unref();
+    }
+    sendToRenderer({ type: 'claude_login', state: 'opened' });
+  } catch (e) {
+    sendToRenderer({ type: 'error', message: `Could not open a terminal for the Claude login: ${e.message}. Open one yourself and run: claude /login` });
+  }
+}
+
 /** The End modal has buttons: leave ghost (click-through) mode first or it could never be answered. */
 function askEndSession() {
   if (state.ghost) setGhost(false);
@@ -358,7 +404,17 @@ function enterSetup() {
   sendToRenderer({ type: 'mode', mode: state.mode });
 }
 
+let reporter = null;
+let lastBackendStatus = null;
 function sendToRenderer(msg) {
+  // every error that reaches the UI is also kept for "Reportar problema"
+  if (reporter && msg) {
+    if (msg.type === 'error') reporter.note('app', msg.message);
+    else if (msg.type === 'llm_end' && !msg.provider && !msg.cancelled && (msg.errors || []).length) reporter.note('providers', msg.errors.join(' | '));
+    else if (msg.type === 'provider_test' && msg.state === 'done' && !msg.ok) reporter.note(`test:${msg.provider}`, msg.error);
+    else if (msg.type === 'update_status' && msg.state === 'error') reporter.note('updater', msg.error);
+    if (msg.type === 'status') lastBackendStatus = msg;
+  }
   const win = state.win;
   if (win && !win.isDestroyed()) win.webContents.send('copilot:event', msg);
 }
@@ -666,6 +722,9 @@ ipcMain.on('copilot:send', (_event, msg) => {
       if (state.win && state.mode === 'live' && state.ghost) state.win.setIgnoreMouseEvents(!msg.value, { forward: true });
       break;
     case 'set_auto_vision': saveHudConfig({ auto_vision: Boolean(msg.value) }); sendToBackend(msg); break;
+    case 'renderer_error': reporter && reporter.note('renderer', msg.message); break;
+    case 'report_problem': reportProblem(String(msg.note || '')); break;
+    case 'claude_login': claudeLogin(); break;
     case 'check_updates': updater && updater.check({ manual: true }); break;
     case 'install_update': updater && (updater.staged ? updater.install() : updater.check({ manual: true })); break;
     case 'set_updates': saveConfigSection('updates', { enabled: msg.enabled !== false, auto_install: msg.auto_install !== false }); updater && updater.set({}); break;
@@ -858,6 +917,12 @@ if (!gotLock) {
       quit: () => { state.quitting = true; app.quit(); },
     });
     updater.start();
+    reporter = new Reporter({
+      root: ROOT, logFile: path.join(LOG_DIR, 'copilot.log'), version: updater.currentVersion(),
+      getConfig: () => { try { return { ...config, ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')), reports: config.reports, updates: config.updates }; } catch { return config; } },
+      getStatus: () => lastBackendStatus,
+      getProfileNames: () => { try { return getProfiles().list().map((x) => (typeof x === 'string' ? x : x.name)); } catch { return []; } },
+    });
   });
 
   app.on('window-all-closed', () => app.quit());
