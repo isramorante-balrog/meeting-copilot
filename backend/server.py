@@ -67,7 +67,7 @@ from prompts import (DEBRIEF_SYSTEM, MEMORY_EXTRACT_SYSTEM, SUMMARY_SYSTEM_PROMP
                      build_system_prompt, build_vision_prompt, language_rule)
 from prompts import OPENER_SYSTEM, analysis_to_markdown, focus_block, parse_analysis  # noqa: E402
 from prompts import FOLLOWUP_KINDS, is_probing_followup, story_signature, wants_story  # noqa: E402
-from prompts import refers_to_screen, screen_frame_note, detect_language  # noqa: E402
+from prompts import refers_to_screen, screen_frame_note, detect_language, language_evidence  # noqa: E402
 from config import ROOT_DIR  # noqa: E402
 from retrieval import tokenize  # noqa: E402
 from transcriber import looks_complete, build_engine, mine_vocabulary, ENGINES  # noqa: E402
@@ -157,6 +157,7 @@ class Copilot:
         self._armed_at = 0.0
         self._no_audio_hint = 0.0
         self._no_audio_count = 0
+        self._interim_flip_at = 0.0
         self.input_mode = cfg["audio"].get("input_mode") if cfg["audio"].get("input_mode") in ("pc", "external") else "pc"
         self.last_external = {"them": 0.0, "me": 0.0}
 
@@ -331,6 +332,7 @@ class Copilot:
         if channel == "them" and text:
             # Deepgram interim words = the speaker is still talking: abort/hold the answer for the open turn
             self._on_remote_activity(text)
+            self._auto_flip_on_interim(text)
         elif channel == "me" and text and not self._is_echo(text):
             self._me_talking(text)
 
@@ -911,6 +913,26 @@ class Copilot:
             if eng.flip_auto(det, source=f"text reads as {det}"):
                 self.diag["stt_auto_flips"] = self.diag.get("stt_auto_flips", 0) + 1
                 self.broadcast({"type": "stt_language", "active": det, "decoder": det, "mode": "auto", "source": "text"})
+                self.broadcast_status()
+
+    def _auto_flip_on_interim(self, text: str) -> None:
+        """AUTO mode, while the other person is still talking: the words coming out of the active decoder are
+        plainly the other language (the Spanish decoder writing "I heard the question repeated, let's make a
+        concrete one"). Waiting for a finished sentence does not work here - the wrong decoder often never
+        finalises one - so the pointer moves as soon as the evidence is clear. One move per 8 s at most."""
+        eng = self.transcriber
+        if eng is None or self.cfg["general"].get("language") != "auto" or not getattr(eng, "streaming", False):
+            return
+        if getattr(eng, "mode", "auto") != "auto" or time.time() - self._interim_flip_at < 8.0:
+            return
+        en, es = language_evidence(text)
+        active = getattr(eng, "active_lang", None)
+        other, mine, theirs = ("en", es, en) if active == "es" else ("es", en, es)
+        if theirs >= 4 and theirs >= 2 * mine + 2:
+            self._interim_flip_at = time.time()
+            if eng.flip_auto(other, source=f"live words read as {other}"):
+                self.diag["stt_auto_flips"] = self.diag.get("stt_auto_flips", 0) + 1
+                self.broadcast({"type": "stt_language", "active": other, "decoder": other, "mode": "auto", "source": "text"})
                 self.broadcast_status()
 
     def _fire_turn(self, t: dict, mode: str, why: str) -> int:

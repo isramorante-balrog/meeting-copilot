@@ -467,6 +467,7 @@ function clearAnswer() {
   for (const c of cards.values()) c.el.remove();
   cards.clear(); turnCards.clear(); latestCard = null; userScrolledUp = false;
   renderStory(null);
+  const stale = $('#answer-body'); if (stale) stale.remove();   // never two "cleared" lines
   const idle = document.createElement('div'); idle.id = 'answer-body'; idle.className = 'empty'; idle.textContent = t('answer.cleared');
   feed().appendChild(idle);
   $('#jump-latest').classList.add('hidden');

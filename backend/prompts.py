@@ -107,6 +107,24 @@ def detect_language(text: str, default: str | None = None) -> str | None:
     return "en" if en > es else "es"
 
 
+_EN_LIVE = {"the", "i", "i'm", "i've", "i'd", "my", "let's", "let", "make", "need", "still", "rather", "answer", "question",
+            "use", "want", "going", "now", "here", "by", "at", "be", "as", "an", "its", "it's", "their", "them", "who",
+            "more", "some", "any", "into", "over", "also", "get", "got", "see", "say", "said", "one", "first", "next",
+            "really", "very", "because", "while", "after", "before", "these", "those", "he", "she", "his", "her", "am",
+            "you've", "you're", "don't", "didn't", "can't", "what's", "that's", "heard", "okay", "thanks", "thank"}
+
+
+def language_evidence(text: str) -> tuple[int, int]:
+    """(english, spanish) function-word evidence in `text`. Wider English list than detect_language: it is used
+    on live words, where the question is whether the active decoder is writing the other language."""
+    t = (text or "").lower()
+    words = re.findall(r"[a-záéíóúñü']+", t)
+    en = sum(1 for w in words if (w in _EN_WORDS and w not in _AMBIG) or w in _EN_LIVE)
+    es = sum(1 for w in words if w in _ES_WORDS and w not in _AMBIG)
+    es += 2 * len(re.findall(r"[¿¡]", t)) + sum(1 for w in words if re.search(r"[áéíóúñ]", w))
+    return en, es
+
+
 def language_rule(lang: str | None, summary: bool = False) -> str:
     table = SUMMARY_LANGUAGE_RULES if summary else LANGUAGE_RULES
     return table.get((lang or "auto").lower(), table["auto"])

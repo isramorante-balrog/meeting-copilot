@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.7 — 2026-11-18
+
+### Fixed
+- Older answers could not be scrolled back to in the live HUD: the answer area grew past the window instead
+  of scrolling.
+- AUTO did not leave Spanish when the call was in English. It waited for a finished sentence, which the wrong
+  recogniser often never produces. It now switches as soon as the live words are plainly the other language.
+- "Limpio. Escuchando…" could appear twice.
+
+### Changed
+- The live HUD opens taller (520 px instead of 380). Applied once; a height you choose afterwards is kept.
+
 ## 1.0.6 — 2026-11-18
 
 ### Fixed

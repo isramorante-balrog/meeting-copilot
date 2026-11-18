@@ -1,6 +1,6 @@
 {
   "name": "meeting-copilot",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Real-time meeting copilot: live transcription (Deepgram / Whisper) and streaming AI answers (Claude, ChatGPT, Gemini, Grok, DeepSeek) in an always-on-top HUD. Electron + Python.",
   "main": "electron/main.js",
   "scripts": {

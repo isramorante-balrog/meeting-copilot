@@ -17,7 +17,7 @@ DEFAULT_CONFIG_PATH = ROOT_DIR / "config.json"
 
 DEFAULTS: dict[str, Any] = {
     "backend": {"host": "127.0.0.1", "port": 8765, "python": ""},
-    "hud": {"width": 520, "height": 380, "max_width": 520, "top": 6, "opacity": 0.75, "font_size": 17, "setup_width": 1040, "setup_height": 720,
+    "hud": {"width": 520, "height": 520, "max_width": 520, "top": 6, "opacity": 0.75, "font_size": 17, "setup_width": 1040, "setup_height": 720,
             "nudge_px": 40, "auto_vision": False, "auto_vision_interval_s": 5},
     "general": {"language": "auto", "primary": "claude", "ui_language": "es", "active_profile": "default",
                 "onboarded": False},   # False -> the first-run wizard (AI provider + transcription keys) opens

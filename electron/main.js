@@ -62,7 +62,7 @@ const DEFAULT_CONFIG = {
   // Problem reports become GitHub issues on `repo`. Without a token the browser opens a pre-filled issue;
   // with a maintainer token (Issues: read/write) they are created directly. See electron/reporter.js.
   reports: { repo: 'isramorante-balrog/meeting-copilot', github_token: '', include_log: true },
-  hud: { width: 520, height: 460, max_width: 520, top: 6, opacity: 0.75, font_size: 17, setup_width: 1040, setup_height: 720,
+  hud: { width: 520, height: 520, max_width: 520, top: 6, opacity: 0.75, font_size: 17, setup_width: 1040, setup_height: 720,
          nudge_px: 40, auto_vision: false, auto_vision_interval_s: 5 },
   hotkeys: {
     screenshot: 'Alt+S', force_answer: 'Alt+A', toggle_visibility: 'Alt+H', toggle_listening: 'Alt+M',
@@ -363,7 +363,10 @@ function enterLive() {
   const { width: screenW } = screen.getPrimaryDisplay().workAreaSize;
   const maxW = Number(config.hud.max_width) || 520;
   const w = Math.min(Number(config.hud.width) || 520, maxW, screenW - 20);
-  const h = Number(config.hud.height) || 380;
+  if (!config.hud.tall_default) {       // 1.0.7: the HUD opens taller; applied once, a height chosen afterwards is kept
+    saveHudConfig({ height: Math.max(Number(config.hud.height) || 0, 520), tall_default: true });
+  }
+  const h = Number(config.hud.height) || 520;
   win.setMinimumSize(380, 140);
   win.setMaximumSize(maxW, 1200);
   const savedX = Number(config.hud.x);

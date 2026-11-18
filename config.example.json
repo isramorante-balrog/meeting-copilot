@@ -6,7 +6,7 @@
   },
   "hud": {
     "width": 520,
-    "height": 380,
+    "height": 520,
     "max_width": 520,
     "top": 6,
     "opacity": 0.75,
