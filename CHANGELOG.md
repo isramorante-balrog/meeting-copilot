@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.6 — 2026-11-18
+
+### Fixed
+- Call audio was only captured from the Windows default output. Teams, Meet and Zoom play on the device chosen
+  in their own settings (usually a headset), so the transcript could stay empty for a whole call. With the
+  system-audio device left on "default", every output is now listened to and the one that is playing is followed.
+- Windows delivers no audio at all while nothing is playing, so the recogniser never saw the pause that ends a
+  sentence and held its last words until the next sound. The gap is now filled with two seconds of silence.
+
+### Added
+- If no call audio has arrived 20 seconds into a session, the HUD says so, names the device it is listening to
+  and offers "Elegir dispositivo". The event is also written to the session log.
+
 ## 1.0.5 — 2026-11-17
 
 ### Fixed

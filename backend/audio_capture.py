@@ -295,9 +295,104 @@ class LoopbackCapture(_BaseCapture):
     def _run_once(self) -> None:
         kind, _ = parse_device(self.spec)
         if sys.platform.startswith("win") and kind != "sd":
+            if kind == "default" and not getattr(self, "_follow_failed", False):
+                try:
+                    self._run_wasapi_follow()
+                    return
+                except Exception as exc:  # noqa: BLE001 - never worse than before: fall back to the one default device
+                    self._follow_failed = True
+                    log.warning("Loopback: following all outputs failed (%s) - using the default output only", exc)
             self._run_wasapi()
         else:
             self._run_sounddevice()
+
+    # -- Windows, device = default: listen to EVERY output and follow the one that is playing ------------
+    HOT_RMS = 0.003          # a device counts as "playing" above this level
+    HOT_RELEASE_S = 0.6      # the followed device must be quiet this long before another one takes over
+
+    def _run_wasapi_follow(self) -> None:
+        """A call does not always play on the Windows default output: Teams / Meet / Zoom use the device chosen
+        in their own settings (usually the headset), so the loopback of the default device can be silent for the
+        whole call. With the device left on "default" every output's loopback is opened and the frames of the one
+        that actually carries sound are forwarded; the others are ignored."""
+        import pyaudiowpatch as pyaudio
+
+        p = pyaudio.PyAudio()
+        streams: dict[int, object] = {}
+        names: dict[int, str] = {}
+        state = {"hot": None, "loud": {}}
+        try:
+            try:
+                default_idx = int(p.get_default_wasapi_loopback()["index"])
+            except Exception:  # noqa: BLE001
+                default_idx = None
+            devices = list(p.get_loopback_device_info_generator())
+            if not devices:
+                raise RuntimeError("no WASAPI loopback device found (is any playback device enabled?)")
+
+            def make_cb(idx: int, ch: int, sr: int):
+                def cb(in_data, frame_count, _time_info, _status):
+                    data = np.frombuffer(in_data, dtype=np.int16).astype(np.float32) / 32768.0
+                    if ch > 1:
+                        data = data.reshape(-1, ch).mean(axis=1)
+                    now = time.time()
+                    if len(data) and float(np.sqrt(np.mean(np.square(data)))) > self.HOT_RMS:
+                        state["loud"][idx] = now
+                        hot = state["hot"]
+                        if hot != idx and (hot is None or now - state["loud"].get(hot, 0.0) > self.HOT_RELEASE_S):
+                            state["hot"] = idx
+                            self.device_name = f"{names[idx]} (auto)"
+                            log.info("Loopback: following %s", names[idx])
+                    if state["hot"] == idx:
+                        self._push(data, sr)
+                    return (None, pyaudio.paContinue)
+                return cb
+
+            for d in devices:
+                idx = int(d["index"])
+                sr = int(d["defaultSampleRate"]) or 48000
+                ch = max(1, int(d["maxInputChannels"]))
+                names[idx] = str(d["name"])
+                try:
+                    st = p.open(format=pyaudio.paInt16, channels=ch, rate=sr, input=True, input_device_index=idx,
+                                frames_per_buffer=int(sr * FRAME_MS / 1000), stream_callback=make_cb(idx, ch, sr))
+                    st.start_stream()
+                    streams[idx] = st
+                except Exception as exc:  # noqa: BLE001 - a device that cannot be opened is skipped, not fatal
+                    log.info("Loopback: skipping %s (%s)", names[idx], exc)
+            if not streams:
+                raise RuntimeError("no WASAPI loopback device could be opened")
+            state["hot"] = default_idx if default_idx in streams else next(iter(streams))
+            self.device_name = f"{names[state['hot']]} (auto)"
+            self.outputs = [names[i] for i in streams]
+            log.info("Loopback (WASAPI, following %d outputs): %s", len(streams), "; ".join(self.outputs))
+            self.error = None
+            self.active = True
+            known = sorted(names.values())
+            checked = time.time()
+            while not self.stop_event.is_set() and any(st.is_active() for st in streams.values()):
+                time.sleep(0.2)
+                if time.time() - checked > 5.0:        # a headset plugged in / removed: reopen with the new list
+                    checked = time.time()
+                    try:
+                        q = pyaudio.PyAudio()
+                        try:
+                            current = sorted(str(d["name"]) for d in q.get_loopback_device_info_generator())
+                        finally:
+                            q.terminate()
+                    except Exception:  # noqa: BLE001
+                        current = known
+                    if current != known:
+                        log.info("Loopback: the list of outputs changed - reopening")
+                        return
+        finally:
+            for st in streams.values():
+                try:
+                    st.stop_stream()
+                    st.close()
+                except Exception:  # noqa: BLE001
+                    pass
+            p.terminate()
 
     # -- Windows ---------------------------------------------------------
     def _run_wasapi(self) -> None:

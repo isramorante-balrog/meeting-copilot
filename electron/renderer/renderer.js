@@ -251,7 +251,7 @@ Object.assign(I18N.en, {
   'report.note_ph': 'What were you doing when it failed? (optional)', 'report.send': 'Create report', 'report.cancel': 'Cancel', 'report.no_errors': 'No errors recorded in this session.',
   'report.sent': (u) => `Report filed: ${u}`, 'report.opened': 'GitHub opened with the report filled in — review it and press "Submit new issue". A full copy is on your clipboard.',
   'report.saved': (f) => `Report saved to ${f}`, 'report.api_failed': (e) => `Could not file it automatically (${e}); opening GitHub instead.`,
-  'prov.failed': 'failing', 'chk.stt_connecting': (e) => `${e} is connecting…`, 'upd.none': (v) => `You already have the latest version (v${v}).`, 'upd.checking_long': 'Checking GitHub for a newer version…', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
+  'prov.failed': 'failing', 'act.audio': 'Choose device', 'hint.no_audio': (d) => `No call audio is arriving (listening to: ${d}). Pick the output where the call is playing.`, 'hint.no_audio_ext': (d) => `The microphone hears nothing (${d}). Check the microphone or move the phone closer.`, 'chk.stt_connecting': (e) => `${e} is connecting…`, 'upd.none': (v) => `You already have the latest version (v${v}).`, 'upd.checking_long': 'Checking GitHub for a newer version…', 'status.listening': 'Listening', 'status.loading': 'Starting…', 'status.muted': 'Muted', 'status.paused': 'Paused', 'status.analyzing': 'Analyzing…', 'status.thinking': 'Answering…', 'status.offline': 'Offline',
 });
 Object.assign(I18N.es, {
   'btn.screen': 'Pantalla', 'btn.setup': 'Ajustes', 'btn.end': 'Terminar', 'setup.start': 'Empezar a escuchar', 'setup.resume': 'Volver al HUD',
@@ -273,7 +273,7 @@ Object.assign(I18N.es, {
   'report.note_ph': '¿Qué estabas haciendo cuando falló? (opcional)', 'report.send': 'Crear informe', 'report.cancel': 'Cancelar', 'report.no_errors': 'No hay errores registrados en esta sesión.',
   'report.sent': (u) => `Informe registrado: ${u}`, 'report.opened': 'Se abrió GitHub con el informe ya escrito: revísalo y pulsa «Submit new issue». Tienes una copia completa en el portapapeles.',
   'report.saved': (f) => `Informe guardado en ${f}`, 'report.api_failed': (e) => `No se pudo registrar automáticamente (${e}); se abre GitHub.`,
-  'prov.failed': 'con error', 'chk.stt_connecting': (e) => `${e} se está conectando…`, 'upd.none': (v) => `Ya tienes la última versión (v${v}).`, 'upd.checking_long': 'Buscando una versión más nueva en GitHub…', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
+  'prov.failed': 'con error', 'act.audio': 'Elegir dispositivo', 'hint.no_audio': (d) => `No llega audio de la llamada (escuchando: ${d}). Elige la salida donde suena la llamada.`, 'hint.no_audio_ext': (d) => `El micrófono no oye nada (${d}). Revisa el micrófono o acerca el teléfono.`, 'chk.stt_connecting': (e) => `${e} se está conectando…`, 'upd.none': (v) => `Ya tienes la última versión (v${v}).`, 'upd.checking_long': 'Buscando una versión más nueva en GitHub…', 'status.listening': 'Escuchando', 'status.loading': 'Arrancando…', 'status.muted': 'En silencio', 'status.paused': 'En pausa', 'status.analyzing': 'Analizando…', 'status.thinking': 'Respondiendo…', 'status.offline': 'Sin conexión',
 });
 let uiLang = 'en';
 const t = (key, ...args) => {
@@ -524,6 +524,7 @@ const ACTIONS = {
   providers: { label: 'act.providers', run: () => { if (mode === 'live') window.copilot.send({ type: 'enter_setup' }); setTimeout(() => openProviders(false), mode === 'live' ? 250 : 0); } },
   retry: { label: 'act.retry', run: () => window.copilot.send({ type: 'generate' }) },
   report: { label: 'act.report', run: () => openReport() },
+  audio: { label: 'act.audio', run: () => { if (mode === 'live') window.copilot.send({ type: 'enter_setup' }); setTimeout(() => showTab('audio'), mode === 'live' ? 250 : 0); } },
 };
 function actionButton(name, primary = false) {
   const a = ACTIONS[name], b = document.createElement('button');
@@ -2001,7 +2002,11 @@ window.copilot.onEvent((ev) => {
     case 'error': { rememberError(ev.message); const f = splitError(ev.message), x = explainError(f.provider, f.message); toast(x.code === 'other' ? ev.message : [provLabel(f.provider), x.text].filter(Boolean).join(': '), true, x.code === 'other' ? null : x.action); break; }
     case 'report_status': onReportStatus(ev); break;
     case 'claude_login': toast(t('login.opened')); break;
-    case 'hint': if (ev.code === 'echo') toast(t('hint.echo'), true); else if (ev.message) toast(ev.message); break;
+    case 'hint':
+      if (ev.code === 'echo') toast(t('hint.echo'), true);
+      else if (ev.code === 'no_remote_audio') { rememberError(`no call audio from ${ev.device}`); toast(t(ev.input_mode === 'external' ? 'hint.no_audio_ext' : 'hint.no_audio', ev.device || ''), true, 'audio'); }
+      else if (ev.message) toast(ev.message);
+      break;
     case 'log': if (/^READY/.test(ev.message)) toast(t('toast.ready')); break;
     default: break;
   }

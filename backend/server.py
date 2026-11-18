@@ -152,6 +152,11 @@ class Copilot:
         self.external = {"them": False, "me": False}   # channel fed by the HUD (Electron) instead of Python
         # v17 audio input mode: "pc" (loopback = remote voice, mic = my own context) or "external" (phone on
         # speaker / room audio: the laptop MIC is the remote voice and triggers answers; loopback is ignored)
+        self._last_frame: dict[str, float] = {}      # last audio frame per capture channel (any level)
+        self._last_sound: dict[str, float] = {}      # last frame that was not silence
+        self._armed_at = 0.0
+        self._no_audio_hint = 0.0
+        self._no_audio_count = 0
         self.input_mode = cfg["audio"].get("input_mode") if cfg["audio"].get("input_mode") in ("pc", "external") else "pc"
         self.last_external = {"them": 0.0, "me": 0.0}
 
@@ -426,6 +431,10 @@ class Copilot:
         if len(x) == 0:
             return
         rms = float(np.sqrt(np.mean(np.square(x))))
+        now = time.time()
+        self._last_frame[channel] = now
+        if rms > 0.004:
+            self._last_sound[channel] = now
         lvl = min(1.0, rms * 6.0)
         self.levels[channel] = max(lvl, self.levels[channel] * 0.8)
         self.diag["chunks"][channel] += 1
@@ -507,6 +516,10 @@ class Copilot:
                 self._turn_watchdog()
             except Exception as exc:  # noqa: BLE001
                 log.debug("watchdog: %s", exc)
+            try:
+                self._audio_watchdog()
+            except Exception as exc:  # noqa: BLE001
+                log.debug("audio watchdog: %s", exc)
             d = self.diag
             self.broadcast({"type": "levels", "them": round(self.levels["them"], 3), "me": round(self.levels["me"], 3),
                             "diag": {"chunks": dict(d["chunks"]), "segments": d["segments"], "transcribed": d["transcribed"],
@@ -521,6 +534,39 @@ class Copilot:
                                      "stt_connections": (self.stt_state().get("connections") if self.stt_streaming else None),
                                      "last_error": d["last_error"], "armed": self.armed, "listening": self.listening,
                                      "in_speech": {ch: seg.in_speech() for ch, seg in self.segmenters.items()}}})
+
+    def _audio_watchdog(self) -> None:
+        """Runs ten times a second while a client is connected.
+
+        1. Silence tail. WASAPI loopback delivers no frames at all while nothing is playing, so a streaming
+           engine never sees the pause that ends a sentence and holds its last words until the next sound.
+           For 2 s after the last real frame the gap is filled with silence so the sentence is finalised.
+        2. No call audio. If nothing has been heard on the remote channel since the session started, say so
+           with the device name instead of sitting there with an empty transcript."""
+        if not self.armed:
+            self._armed_at = 0.0
+            return
+        now = time.time()
+        if not self._armed_at:
+            self._armed_at = now
+            self._no_audio_hint = 0.0
+            self._no_audio_count = 0
+        t = self.transcriber
+        if t is not None and getattr(t, "streaming", False):
+            for ch in ("them", "me"):
+                gap = now - self._last_frame.get(ch, 0.0)
+                if 0.15 < gap < 2.0:
+                    t.feed(ch, np.zeros(1600, dtype=np.float32))      # 100 ms of silence at 16 kHz
+        heard = self._last_sound.get("them", 0.0) >= self._armed_at    # _sink has already mapped the call to "them"
+        if not heard and now - self._armed_at > 20 and now - self._no_audio_hint > 45 and self._no_audio_count < 3:
+            self._no_audio_hint = now
+            self._no_audio_count += 1
+            source = "me" if self.input_mode == "external" else "them"  # capture thread that carries the call
+            dev = next((c.device_name for c in self.captures if c.channel == source), None) or "Electron"
+            log.warning("no call audio on %s since the session started (%s)", source, dev)
+            self.session.event(f"no call audio since start - device: {dev}")
+            self.broadcast({"type": "hint", "code": "no_remote_audio", "device": dev, "input_mode": self.input_mode,
+                            "message": f"No call audio is arriving from {dev}."})
 
     def _turn_complete(self, channel: str) -> bool:
         """Adaptive VAD hook: does the interim transcript of this turn read as a finished sentence?
